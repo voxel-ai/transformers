@@ -57,7 +57,7 @@ def _is_package_available(pkg_name: str, return_version: bool = False) -> Union[
         try:
             # importlib.metadata works with the distribution package, which may be different from the import
             # name (e.g. `PIL` is the import name, but `pillow` is the distribution name)
-            distributions = PACKAGE_DISTRIBUTION_MAPPING.get(pkg_name)
+            distributions = PACKAGE_DISTRIBUTION_MAPPING.get(pkg_name, [])
             # Per PEP 503, underscores and hyphens are equivalent in package names.
             # Prefer the distribution that matches the (normalized) package name.
             normalized_pkg_name = pkg_name.replace("_", "-")
