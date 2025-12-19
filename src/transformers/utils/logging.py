@@ -29,13 +29,14 @@ from logging import (
     WARNING,
 )
 from logging import captureWarnings as _captureWarnings
+from typing import Optional
 
 import huggingface_hub.utils as hf_hub_utils
 from tqdm import auto as tqdm_lib
 
 
 _lock = threading.Lock()
-_default_handler: logging.Handler | None = None
+_default_handler: Optional[logging.Handler] = None
 
 log_levels = {
     "detail": logging.DEBUG,  # will also print filename and line number
