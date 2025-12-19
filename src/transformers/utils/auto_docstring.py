@@ -17,10 +17,10 @@ import inspect
 import os
 import textwrap
 from pathlib import Path
-from types import UnionType
 from typing import Union, get_args, get_origin
 
 import regex as re
+
 
 from .doc import (
     MODELS_TO_PIPELINE,
@@ -1294,7 +1294,7 @@ def _process_parameter_type(param):
     elif param.annotation is None:
         return "None", True
     # This is, astonishingly, the right way to do it: https://docs.python.org/3/library/typing.html#typing.Union
-    elif get_origin(param.annotation) is Union or get_origin(param.annotation) is UnionType:
+    elif get_origin(param.annotation) is Union:
         subtypes = get_args(param.annotation)
     else:
         subtypes = [param.annotation]  # Just pretend it's a single-element union so we don't need two code paths
