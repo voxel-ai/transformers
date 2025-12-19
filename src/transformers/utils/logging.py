@@ -144,7 +144,7 @@ def captureWarnings(capture):
     _captureWarnings(capture)
 
 
-def get_logger(name: str | None = None) -> logging.Logger:
+def get_logger(name:Optional[str] = None) -> logging.Logger:
     """
     Return a logger with the specified name.
 
