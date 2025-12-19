@@ -31,7 +31,7 @@ from enum import Enum
 from functools import lru_cache
 from itertools import chain
 from types import ModuleType
-from typing import Any
+from typing import Any, Dict, List, Optional, Set, Tuple, Union, FrozenSet
 
 import packaging.version
 from packaging import version
@@ -42,10 +42,13 @@ from . import logging
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 
 
-PACKAGE_DISTRIBUTION_MAPPING = importlib.metadata.packages_distributions()
+# `packages_distributions()` is not present in Python 3.9 stdlib importlib.metadata
+if hasattr(importlib.metadata, "packages_distributions"):
+    PACKAGE_DISTRIBUTION_MAPPING = importlib.metadata.packages_distributions()
+else:
+    PACKAGE_DISTRIBUTION_MAPPING = {}
 
-
-def _is_package_available(pkg_name: str, return_version: bool = False) -> tuple[bool, str] | bool:
+def _is_package_available(pkg_name: str, return_version: bool = False) -> Union[Tuple[bool, str], bool]:
     """Check if `pkg_name` exist, and optionally try to get its version"""
     spec = importlib.util.find_spec(pkg_name)
     package_exists = spec is not None
@@ -54,7 +57,7 @@ def _is_package_available(pkg_name: str, return_version: bool = False) -> tuple[
         try:
             # importlib.metadata works with the distribution package, which may be different from the import
             # name (e.g. `PIL` is the import name, but `pillow` is the distribution name)
-            distributions = PACKAGE_DISTRIBUTION_MAPPING[pkg_name]
+            distributions = PACKAGE_DISTRIBUTION_MAPPING.get(pkg_name)
             # Per PEP 503, underscores and hyphens are equivalent in package names.
             # Prefer the distribution that matches the (normalized) package name.
             normalized_pkg_name = pkg_name.replace("_", "-")
@@ -206,7 +209,7 @@ def is_habana_gaudi1() -> bool:
 
 
 @lru_cache
-def is_torch_mps_available(min_version: str | None = None) -> bool:
+def is_torch_mps_available(min_version: Optional[str] = None) -> bool:
     if is_torch_available():
         import torch
 
@@ -378,7 +381,7 @@ def is_torch_hpu_available() -> bool:
 
     original_take_along_dim = torch.take_along_dim
 
-    def patched_take_along_dim(input: torch.Tensor, indices: torch.LongTensor, dim: int | None = None) -> torch.Tensor:
+    def patched_take_along_dim(input: torch.Tensor, indices: torch.LongTensor, dim: Optional[int] = None) -> torch.Tensor:
         if input.dtype == torch.int64 and input.device.type == "hpu":
             return original_take_along_dim(input.to(torch.int32), indices, dim).to(torch.int64)
         else:
@@ -1882,8 +1885,8 @@ class DummyObject(type):
         requires_backends(cls, cls._backends)
 
 
-BACKENDS_T = frozenset[str]
-IMPORT_STRUCTURE_T = dict[BACKENDS_T, dict[str, set[str]]]
+BACKENDS_T = FrozenSet[str]
+IMPORT_STRUCTURE_T = Dict[BACKENDS_T, Dict[str, Set[str]]]
 
 
 class _LazyModule(ModuleType):
@@ -1897,10 +1900,10 @@ class _LazyModule(ModuleType):
         self,
         name: str,
         module_file: str,
-        import_structure: IMPORT_STRUCTURE_T,
-        module_spec: importlib.machinery.ModuleSpec | None = None,
-        extra_objects: dict[str, object] | None = None,
-        explicit_import_shortcut: dict[str, list[str]] | None = None,
+        import_structure: "IMPORT_STRUCTURE_T",
+        module_spec: Optional[importlib.machinery.ModuleSpec] = None,
+        extra_objects: Optional[Dict[str, object]] = None,
+        explicit_import_shortcut: Optional[Dict[str, List[str]]] = None,
     ):
         super().__init__(name)
 
@@ -2720,7 +2723,7 @@ def spread_import_structure(nested_import_structure):
 
 
 @lru_cache
-def define_import_structure(module_path: str, prefix: str | None = None) -> IMPORT_STRUCTURE_T:
+def define_import_structure(module_path: str, prefix: Optional[str] = None) -> "IMPORT_STRUCTURE_T":
     """
     This method takes a module_path as input and creates an import structure digestible by a _LazyModule.
 
