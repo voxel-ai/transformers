@@ -25,16 +25,15 @@ from .utils import logging
 from .utils.import_utils import is_torch_available, requires
 
 
-if is_torch_available():
-    import torch
-    from safetensors.torch import save_file
+import torch
+from safetensors.torch import save_file
 
-    _torch_distributed_available = False
-    # Note to code inspectors: this toolbox is intended for people who add models to `transformers`.
-    if torch.distributed.is_available():
-        import torch.distributed.tensor
+_torch_distributed_available = False
+# Note to code inspectors: this toolbox is intended for people who add models to `transformers`.
+if torch.distributed.is_available():
+    import torch.distributed.tensor
 
-        _torch_distributed_available = True
+    _torch_distributed_available = True
 else:
     _torch_distributed_available = False
 

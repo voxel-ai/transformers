@@ -38,16 +38,10 @@ _CAN_RECORD_REGISTRY = {}
 
 logger = logging.get_logger(__name__)
 
-_is_torch_available = False
-if is_torch_available():
-    # required for @can_return_tuple decorator to work with torchdynamo
-    import torch
-    from torch.types import _dtype
+import torch
+from torch.types import _dtype
 
-    from ..model_debugging_utils import model_addition_debugger_context
-
-    _is_torch_available = True
-
+from ..model_debugging_utils import model_addition_debugger_context
 
 # required for @can_return_tuple decorator to work with torchdynamo
 _is_mlx_available = False
@@ -424,25 +418,24 @@ class ModelOutput(OrderedDict):
         return tuple(self[k] for k in self.keys())
 
 
-if _is_torch_available:
-    import torch.utils._pytree as _torch_pytree
+import torch.utils._pytree as _torch_pytree
 
-    def _model_output_flatten(output: ModelOutput) -> tuple[list[Any], "_torch_pytree.Context"]:
-        return list(output.values()), list(output.keys())
+def _model_output_flatten(output: ModelOutput) -> tuple[list[Any], "_torch_pytree.Context"]:
+    return list(output.values()), list(output.keys())
 
-    def _model_output_unflatten(
-        values: Iterable[Any],
-        context: "_torch_pytree.Context",
-        output_type=None,
-    ) -> ModelOutput:
-        return output_type(**dict(zip(context, values)))
+def _model_output_unflatten(
+    values: Iterable[Any],
+    context: "_torch_pytree.Context",
+    output_type=None,
+) -> ModelOutput:
+    return output_type(**dict(zip(context, values)))
 
-    _torch_pytree.register_pytree_node(
-        ModelOutput,
-        _model_output_flatten,
-        partial(_model_output_unflatten, output_type=ModelOutput),
-        serialized_type_name=f"{ModelOutput.__module__}.{ModelOutput.__name__}",
-    )
+_torch_pytree.register_pytree_node(
+    ModelOutput,
+    _model_output_flatten,
+    partial(_model_output_unflatten, output_type=ModelOutput),
+    serialized_type_name=f"{ModelOutput.__module__}.{ModelOutput.__name__}",
+)
 
 
 class ExplicitEnum(str, Enum):
