@@ -27,10 +27,10 @@ ADAPTER_SAFE_WEIGHTS_NAME = "adapter_model.safetensors"
 
 def find_adapter_config_file(
     model_id: str,
-    cache_dir: str | os.PathLike  = None,
+    cache_dir = None,
     force_download: bool = False,
     proxies: dict[str, str]  = None,
-    token: bool | str  = None,
+    token = None,
     revision: str  = None,
     local_files_only: bool = False,
     subfolder: str = "",

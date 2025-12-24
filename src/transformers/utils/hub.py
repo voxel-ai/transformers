@@ -22,7 +22,7 @@ import sys
 import tempfile
 from concurrent import futures
 from pathlib import Path
-from typing import TypedDict
+from typing import TypedDict, Union
 from uuid import uuid4
 
 import httpx
@@ -74,11 +74,11 @@ logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 
 
 class DownloadKwargs(TypedDict, total=False):
-    cache_dir: str | os.PathLike 
+    cache_dir: Union[str ,os.PathLike ]
     force_download: bool
     proxies: dict[str, str] 
     local_files_only: bool
-    token: str | bool 
+    token: Union[str ,bool] 
     revision: str 
     subfolder: str
     commit_hash: str 
@@ -99,7 +99,7 @@ CLOUDFRONT_DISTRIB_PREFIX = "https://cdn.huggingface.co"
 def _get_cache_file_to_return(
     path_or_repo_id: str,
     full_filename: str,
-    cache_dir: str | Path  = None,
+    cache_dir = None,
     revision: str  = None,
     repo_type: str  = None,
 ):
@@ -118,7 +118,7 @@ def list_repo_templates(
     local_files_only: bool,
     revision: str  = None,
     cache_dir: str  = None,
-    token: str | bool  = None,
+    token = None,
 ) -> list[str]:
     """List template files from a repo.
 
@@ -183,7 +183,7 @@ def define_sagemaker_information():
     return sagemaker_object
 
 
-def http_user_agent(user_agent: dict | str  = None) -> str:
+def http_user_agent(user_agent= None) -> str:
     """
     Formats a user-agent string with basic info about a request.
     """
@@ -219,7 +219,7 @@ def extract_commit_hash(resolved_file: str , commit_hash: str ) -> str :
 
 
 def cached_file(
-    path_or_repo_id: str | os.PathLike,
+    path_or_repo_id,
     filename: str,
     **kwargs,
 ) -> str :
@@ -279,17 +279,17 @@ def cached_file(
 
 
 def cached_files(
-    path_or_repo_id: str | os.PathLike,
+    path_or_repo_id,
     filenames: list[str],
-    cache_dir: str | os.PathLike  = None,
+    cache_dir  = None,
     force_download: bool = False,
     proxies: dict[str, str]  = None,
-    token: bool | str  = None,
+    token= None,
     revision: str  = None,
     local_files_only: bool = False,
     subfolder: str = "",
     repo_type: str  = None,
-    user_agent: str | dict[str, str]  = None,
+    user_agent  = None,
     _raise_exceptions_for_gated_repo: bool = True,
     _raise_exceptions_for_missing_entries: bool = True,
     _raise_exceptions_for_connection_errors: bool = True,
@@ -534,14 +534,14 @@ def cached_files(
 
 
 def has_file(
-    path_or_repo: str | os.PathLike,
+    path_or_repo,
     filename: str,
     revision: str  = None,
     proxies: dict[str, str]  = None,
-    token: bool | str  = None,
+    token  = None,
     *,
     local_files_only: bool = False,
-    cache_dir: str | Path  = None,
+    cache_dir= None,
     repo_type: str  = None,
     **deprecated_kwargs,
 ):
@@ -623,7 +623,7 @@ class PushToHubMixin:
     A Mixin containing the functionality to push a model or tokenizer to the hub.
     """
 
-    def _get_files_timestamps(self, working_dir: str | os.PathLike):
+    def _get_files_timestamps(self, working_dir):
         """
         Returns the list of files with their last modification timestamp.
         """
@@ -631,11 +631,11 @@ class PushToHubMixin:
 
     def _upload_modified_files(
         self,
-        working_dir: str | os.PathLike,
+        working_dir,
         repo_id: str,
         files_timestamps: dict[str, float],
         commit_message: str  = None,
-        token: bool | str  = None,
+        token  = None,
         create_pr: bool = False,
         revision: str  = None,
         commit_description: str  = None,
@@ -717,11 +717,11 @@ class PushToHubMixin:
         commit_description: str  = None,
         # Repo / upload details
         private: bool  = None,
-        token: bool | str  = None,
+        token  = None,
         revision: str  = None,
         create_pr: bool = False,
         # Serialization details
-        max_shard_size: int | str  = "50GB",
+        max_shard_size  = "50GB",
         tags: list[str]  = None,
     ) -> str:
         """
@@ -791,7 +791,7 @@ class PushToHubMixin:
             )
 
 
-def convert_file_size_to_int(size: int | str):
+def convert_file_size_to_int(size):
     """
     Converts a size expressed as a string with digits an unit (like `"5MB"`) to an integer (in bytes).
 
