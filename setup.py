@@ -84,6 +84,7 @@ _deps = [
     "GitPython<3.1.19",
     "hf-doc-builder>=0.3.0",
     "hf_xet",
+    "httpx>=0.28.1",
     "huggingface-hub",
     "importlib_metadata",
     "ipadic>=1.0.0,<2.0",
@@ -349,6 +350,7 @@ extras["dev"] = (
 extras["torchhub"] = deps_list(
     "filelock",
     "huggingface-hub",
+    "httpx",
     "importlib_metadata",
     "numpy",
     "packaging",
@@ -376,6 +378,7 @@ install_requires = [
     deps["pyyaml"],  # used for the model cards metadata
     deps["regex"],  # for OpenAI GPT
     deps["requests"],  # for downloading models over HTTPS
+    deps["httpx"],  # used by hub utilities for network access
     deps["tokenizers"],
     deps["typer-slim"],  # CLI utilities. In practice, already a dependency of huggingface_hub
     deps["safetensors"],

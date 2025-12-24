@@ -27,6 +27,7 @@ pkgs_to_check_at_runtime = [
     "tqdm",
     "regex",
     "requests",
+    "httpx",
     "packaging",
     "filelock",
     "numpy",

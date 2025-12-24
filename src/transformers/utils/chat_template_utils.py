@@ -463,7 +463,7 @@ def _compile_jinja_template(chat_template):
 
 def render_jinja_template(
     conversations: list[ChatType],
-    tools: list[dict | Callable]  = None,
+    tools= None,
     documents: ChatType  = None,
     chat_template: str  = None,
     return_assistant_tokens_mask: bool = False,

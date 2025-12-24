@@ -1183,7 +1183,7 @@ def format_args_docstring(docstring, model_name):
     return docstring
 
 
-def get_args_doc_from_source(args_classes: object | list[object]) -> dict:
+def get_args_doc_from_source(args_classes) -> dict:
     if isinstance(args_classes, (list, tuple)):
         args_classes_dict = {}
         for args_class in args_classes:
