@@ -3368,7 +3368,7 @@ class PreTrainedTokenizerBase(PushToHubMixin):
     def parse_response(
         self,
         response: str | list[str | int | list[int]] | np.ndarray | torch.Tensor,
-        schema: list | dict | None = None,
+        schema: list | dict  = None,
     ):
         """
         Converts an output string created by generating text from a model into a parsed message dictionary.

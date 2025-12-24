@@ -344,7 +344,7 @@ class RepetitionPenaltyLogitsProcessor(LogitsProcessor):
     ```
     """
 
-    def __init__(self, penalty: float, prompt_ignore_length: int | None = None):
+    def __init__(self, penalty: float, prompt_ignore_length: int  = None):
         if not isinstance(penalty, float) or not (penalty > 0):
             raise ValueError(f"`penalty` has to be a strictly positive float, but is {penalty}")
 
@@ -1437,7 +1437,7 @@ class NoBadWordsLogitsProcessor(SequenceBiasLogitsProcessor):
     ```
     """
 
-    def __init__(self, bad_words_ids: list[list[int]], eos_token_id: int | list[int] | torch.Tensor | None = None):
+    def __init__(self, bad_words_ids: list[list[int]], eos_token_id: int | list[int] | torch.Tensor  = None):
         self.bad_word_ids = bad_words_ids
         self._validate_arguments()
 
@@ -2085,7 +2085,7 @@ class WhisperTimeStampLogitsProcessor(LogitsProcessor):
         self,
         generate_config: "GenerationConfig",
         begin_index: int,
-        _detect_timestamp_from_logprob: bool | None = None,
+        _detect_timestamp_from_logprob: bool  = None,
     ):  # support for the kwargs
         self.no_timestamps_token_id = generate_config.no_timestamps_token_id
         self.timestamp_begin = generate_config.no_timestamps_token_id + 1
@@ -2396,8 +2396,8 @@ class UnbatchedClassifierFreeGuidanceLogitsProcessor(LogitsProcessor):
         self,
         guidance_scale: float,
         model,
-        unconditional_ids: torch.LongTensor | None = None,
-        unconditional_attention_mask: torch.LongTensor | None = None,
+        unconditional_ids: torch.LongTensor  = None,
+        unconditional_attention_mask: torch.LongTensor  = None,
         use_cache: bool = True,
     ):
         self.guidance_scale = guidance_scale
@@ -3144,7 +3144,7 @@ class DiaClassifierFreeGuidanceLogitsProcessor(LogitsProcessor):
             the logits of the combined CFG output, but the conditioned output only.
     """
 
-    def __init__(self, guidance_scale: float, guidance_top_k: int | None = None):
+    def __init__(self, guidance_scale: float, guidance_top_k: int  = None):
         if guidance_scale > 1:
             self.guidance_scale = guidance_scale
         else:

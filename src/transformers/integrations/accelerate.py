@@ -163,7 +163,7 @@ def init_on_device(device: "torch.device", include_buffers: bool = False):
             setattr(torch, torch_function_name, old_torch_function)
 
 
-def check_and_set_device_map(device_map: "torch.device | int | str | dict | None") -> dict | str | None:
+def check_and_set_device_map(device_map: "torch.device | int | str | dict ") -> dict | str :
     from ..modeling_utils import get_torch_context_manager_or_global_device
 
     # Potentially detect context manager or global device, and use it (only if no device_map was provided)
@@ -213,7 +213,7 @@ def check_and_set_device_map(device_map: "torch.device | int | str | dict | None
 
 def compute_module_sizes(
     model: "PreTrainedModel",
-    hf_quantizer: "HfQuantizer | None" = None,
+    hf_quantizer: "HfQuantizer " = None,
     buffers_only: bool = False,
     only_modules: bool = True,
 ) -> tuple[dict[str, int], dict[str, int]]:
@@ -261,7 +261,7 @@ def compute_module_sizes(
     return all_module_sizes, leaves_module_sizes
 
 
-def compute_module_total_buffer_size(model: nn.Module, hf_quantizer: "HfQuantizer | None" = None):
+def compute_module_total_buffer_size(model: nn.Module, hf_quantizer: "HfQuantizer " = None):
     """
     Compute the total size of buffers in each submodule of a given model.
     """
@@ -271,9 +271,9 @@ def compute_module_total_buffer_size(model: nn.Module, hf_quantizer: "HfQuantize
 
 def get_balanced_memory(
     model: "PreTrainedModel",
-    max_memory: dict[int | str, int | str] | None = None,
-    no_split_module_classes: list[str] | None = None,
-    hf_quantizer: "HfQuantizer | None" = None,
+    max_memory: dict[int | str, int | str]  = None,
+    no_split_module_classes: list[str]  = None,
+    hf_quantizer: "HfQuantizer " = None,
     low_zero: bool = False,
 ):
     """
@@ -376,9 +376,9 @@ def get_balanced_memory(
 
 def _get_device_map(
     model: "PreTrainedModel",
-    device_map: dict | str | None,
-    max_memory: dict | None,
-    hf_quantizer: "HfQuantizer | None",
+    device_map: dict | str ,
+    max_memory: dict ,
+    hf_quantizer: "HfQuantizer ",
 ) -> dict:
     """Compute the final `device_map` to use if we passed a value in ['auto', 'balanced', 'balanced_low_0', 'sequential'].
     Otherwise, we check for any device inconsistencies in the device_map.
@@ -480,11 +480,11 @@ def expand_device_map(device_map, param_names):
 
 def accelerate_disk_offload(
     model: "PreTrainedModel",
-    disk_offload_folder: str | None,
-    checkpoint_files: list[str] | None,
+    disk_offload_folder: str ,
+    checkpoint_files: list[str] ,
     device_map: dict,
-    sharded_metadata: dict | None,
-    dtype: torch.dtype | None,
+    sharded_metadata: dict ,
+    dtype: torch.dtype ,
     weight_mapping=None,
 ):
     """
@@ -538,7 +538,7 @@ def accelerate_disk_offload(
     return disk_offload_index
 
 
-def offload_weight(weight: torch.Tensor, weight_name: str, offload_folder: str | None, offload_index: dict) -> dict:
+def offload_weight(weight: torch.Tensor, weight_name: str, offload_folder: str , offload_index: dict) -> dict:
     """Write `weight` to disk inside `offload_folder`, and update `offload_index` accordingly. Everything is
     saved in `safetensors` format."""
 
@@ -586,10 +586,10 @@ def load_offloaded_parameter(model: "PreTrainedModel", param_name: str) -> torch
 
 def _init_infer_auto_device_map(
     model: nn.Module,
-    max_memory: dict[int | str, int | str] | None = None,
-    no_split_module_classes: list[str] | None = None,
-    tied_parameters: list[list[str]] | None = None,
-    hf_quantizer: "HfQuantizer | None" = None,
+    max_memory: dict[int | str, int | str]  = None,
+    no_split_module_classes: list[str]  = None,
+    tied_parameters: list[list[str]]  = None,
+    hf_quantizer: "HfQuantizer " = None,
 ) -> tuple[
     list[int | str],
     dict[int | str, int | str],
@@ -656,13 +656,13 @@ def _init_infer_auto_device_map(
 
 def infer_auto_device_map(
     model: nn.Module,
-    max_memory: dict[int | str, int | str] | None = None,
-    no_split_module_classes: list[str] | None = None,
+    max_memory: dict[int | str, int | str]  = None,
+    no_split_module_classes: list[str]  = None,
     verbose: bool = False,
     clean_result: bool = True,
     offload_buffers: bool = False,
-    tied_parameters: list[list[str]] | None = None,
-    hf_quantizer: "HfQuantizer | None" = None,
+    tied_parameters: list[list[str]]  = None,
+    hf_quantizer: "HfQuantizer " = None,
 ):
     """
     Compute a device map for a given model giving priority to GPUs, then offload on CPU and finally offload to disk,

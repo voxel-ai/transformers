@@ -59,7 +59,7 @@ class WithDefaultExample:
 class WithDefaultBoolExample:
     foo: bool = False
     baz: bool = True
-    opt: bool | None = None
+    opt: bool  = None
 
 
 class BasicEnum(Enum):
@@ -91,11 +91,11 @@ class MixedTypeEnumExample:
 
 @dataclass
 class OptionalExample:
-    foo: int | None = None
-    bar: float | None = field(default=None, metadata={"help": "help message"})
-    baz: str | None = None
-    ces: list[str] | None = list_field(default=[])
-    des: list[int] | None = list_field(default=[])
+    foo: int  = None
+    bar: float  = field(default=None, metadata={"help": "help message"})
+    baz: str  = None
+    ces: list[str]  = list_field(default=[])
+    des: list[int]  = list_field(default=[])
 
 
 @dataclass
@@ -120,7 +120,7 @@ class RequiredExample:
 class StringLiteralAnnotationExample:
     foo: int
     required_enum: "BasicEnum" = field()
-    opt: "bool | None" = None
+    opt: "bool " = None
     baz: "str" = field(default="toto", metadata={"help": "help message"})
     foo_str: "list[str]" = list_field(default=["Hallo", "Bonjour", "Hello"])
 
@@ -131,15 +131,15 @@ if is_python_no_less_than_3_10:
     class WithDefaultBoolExamplePep604:
         foo: bool = False
         baz: bool = True
-        opt: bool | None = None
+        opt: bool  = None
 
     @dataclass
     class OptionalExamplePep604:
-        foo: int | None = None
-        bar: float | None = field(default=None, metadata={"help": "help message"})
-        baz: str | None = None
-        ces: list[str] | None = list_field(default=[])
-        des: list[int] | None = list_field(default=[])
+        foo: int  = None
+        bar: float  = field(default=None, metadata={"help": "help message"})
+        baz: str  = None
+        ces: list[str]  = list_field(default=[])
+        des: list[int]  = list_field(default=[])
 
 
 class HfArgumentParserTest(unittest.TestCase):

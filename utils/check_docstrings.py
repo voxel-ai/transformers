@@ -71,11 +71,11 @@ class DecoratedItem:
         int  # 1-based line number where body starts (for functions) or __init__ body start (for classes with __init__)
     )
     args: list[str]  # List of argument names (excluding self, *args, **kwargs) - for classes, these are __init__ args
-    custom_args_text: str | None = None  # custom_args string if provided in decorator
+    custom_args_text: str  = None  # custom_args string if provided in decorator
 
     # Class-specific fields (only populated when kind == 'class')
     has_init: bool = False  # Whether the class has an __init__ method
-    init_def_line: int | None = None  # 1-based line number of __init__ def (if has_init)
+    init_def_line: int  = None  # 1-based line number of __init__ def (if has_init)
     is_model_output: bool = False  # Whether the class inherits from ModelOutput
 
 
@@ -575,7 +575,7 @@ def stringify_default(default: Any) -> str:
         return f"`{default}`"
 
 
-def eval_math_expression(expression: str) -> float | int | None:
+def eval_math_expression(expression: str) -> float | int :
     # Mainly taken from the excellent https://stackoverflow.com/a/9558001
     """
     Evaluate (safely) a mathematial expression and returns its value.
@@ -723,7 +723,7 @@ def find_source_file(obj: Any) -> Path:
     return obj_file.with_suffix(".py")
 
 
-def match_docstring_with_signature(obj: Any) -> tuple[str, str] | None:
+def match_docstring_with_signature(obj: Any) -> tuple[str, str] :
     """
     Matches the docstring of an object with its signature.
 

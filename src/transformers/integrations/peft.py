@@ -67,25 +67,25 @@ class PeftAdapterMixin:
     """
 
     _hf_peft_config_loaded = False
-    _prepare_peft_hotswap_kwargs: dict | None = None
+    _prepare_peft_hotswap_kwargs: dict  = None
 
     def load_adapter(
         self,
-        peft_model_id: str | None = None,
-        adapter_name: str | None = None,
-        revision: str | None = None,
-        token: str | None = None,
+        peft_model_id: str  = None,
+        adapter_name: str  = None,
+        revision: str  = None,
+        token: str  = None,
         device_map: str = "auto",
-        max_memory: str | None = None,
-        offload_folder: str | None = None,
-        offload_index: int | None = None,
-        peft_config: dict[str, Any] | None = None,
-        adapter_state_dict: dict[str, "torch.Tensor"] | None = None,
+        max_memory: str  = None,
+        offload_folder: str  = None,
+        offload_index: int  = None,
+        peft_config: dict[str, Any]  = None,
+        adapter_state_dict: dict[str, "torch.Tensor"]  = None,
         low_cpu_mem_usage: bool = False,
         is_trainable: bool = False,
         hotswap: bool | Literal["auto"] = "auto",
         local_files_only: bool = False,
-        adapter_kwargs: dict[str, Any] | None = None,
+        adapter_kwargs: dict[str, Any]  = None,
     ) -> None:
         """
         Load adapter weights from file or remote Hub folder. If you are not familiar with adapters and PEFT methods, we
@@ -408,7 +408,7 @@ class PeftAdapterMixin:
         self._hotswap_enabled = True
         self._prepare_peft_hotswap_kwargs = {"target_rank": target_rank, "check_compiled": check_compiled}
 
-    def add_adapter(self, adapter_config, adapter_name: str | None = None) -> None:
+    def add_adapter(self, adapter_config, adapter_name: str  = None) -> None:
         r"""
         If you are not familiar with adapters and PEFT methods, we invite you to read more about them on the PEFT
         official documentation: https://huggingface.co/docs/peft
@@ -555,7 +555,7 @@ class PeftAdapterMixin:
 
         return active_adapters
 
-    def get_adapter_state_dict(self, adapter_name: str | None = None, state_dict: dict | None = None) -> dict:
+    def get_adapter_state_dict(self, adapter_name: str  = None, state_dict: dict  = None) -> dict:
         """
         If you are not familiar with adapters and PEFT methods, we invite you to read more about them on the PEFT
         official documentation: https://huggingface.co/docs/peft
@@ -587,9 +587,9 @@ class PeftAdapterMixin:
     def _dispatch_accelerate_model(
         self,
         device_map: str,
-        max_memory: int | None = None,
-        offload_folder: str | None = None,
-        offload_index: int | None = None,
+        max_memory: int  = None,
+        offload_folder: str  = None,
+        offload_index: int  = None,
     ) -> None:
         """
         Optional re-dispatch the model and attach new hooks to the model in case the model has been loaded with

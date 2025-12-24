@@ -31,9 +31,9 @@ class QuantoQuantize(ConversionOps):
     def convert(
         self,
         input_dict: dict[str, list[torch.Tensor]],
-        model: torch.nn.Module | None = None,
-        full_layer_name: str | None = None,
-        missing_keys: list[str] | None = None,
+        model: torch.nn.Module  = None,
+        full_layer_name: str  = None,
+        missing_keys: list[str]  = None,
         **kwargs,
     ) -> dict[str, torch.Tensor]:
         _, value = tuple(input_dict.items())[0]
@@ -58,7 +58,7 @@ class QuantoQuantize(ConversionOps):
 def replace_with_quanto_layers(
     model,
     quantization_config=None,
-    modules_to_not_convert: list[str] | None = None,
+    modules_to_not_convert: list[str]  = None,
 ):
     """
     Public method that recursively replaces the Linear layers of the given model with Quanto quantized layers.

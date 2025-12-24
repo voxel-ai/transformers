@@ -105,7 +105,7 @@ class BenchmarkResult:
         e2e_latency: float,
         timestamps: list[float],
         shape_and_decoded_output: str,
-        gpu_metrics: GPURawMetrics | None,
+        gpu_metrics: GPURawMetrics ,
     ) -> None:
         self.e2e_latency.append(e2e_latency)
         self._timestamps.append(timestamps)

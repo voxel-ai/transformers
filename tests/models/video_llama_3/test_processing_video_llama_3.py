@@ -53,7 +53,7 @@ class VideoLlama3ProcessorTest(ProcessorTesterMixin, unittest.TestCase):
     def _setup_test_attributes(cls, processor):
         cls.image_token = processor.image_token
 
-    def prepare_image_inputs(self, batch_size: int | None = None):
+    def prepare_image_inputs(self, batch_size: int  = None):
         """This function prepares a list of PIL images for testing"""
         if batch_size is None:
             return prepare_image_inputs()[0]

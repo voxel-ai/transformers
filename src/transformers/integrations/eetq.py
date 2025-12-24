@@ -32,7 +32,7 @@ class EetqQuantize(ConversionOps):
         self.hf_quantizer = hf_quantizer
 
     def convert(
-        self, input_dict: dict[str, list[torch.Tensor]], full_layer_name: str | None = None, **kwargs
+        self, input_dict: dict[str, list[torch.Tensor]], full_layer_name: str  = None, **kwargs
     ) -> dict[str, torch.Tensor]:
         _, value = tuple(input_dict.items())[0]
         value = value[0]
@@ -86,7 +86,7 @@ class EetqLinear(nn.Module):
         return output
 
 
-def replace_with_eetq_linear(model, modules_to_not_convert: list[str] | None = None, pre_quantized=False):
+def replace_with_eetq_linear(model, modules_to_not_convert: list[str]  = None, pre_quantized=False):
     """
     A helper function to replace all `torch.nn.Linear` modules by `EetqLinear` modules.
 

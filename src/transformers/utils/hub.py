@@ -74,14 +74,14 @@ logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 
 
 class DownloadKwargs(TypedDict, total=False):
-    cache_dir: str | os.PathLike | None
+    cache_dir: str | os.PathLike 
     force_download: bool
-    proxies: dict[str, str] | None
+    proxies: dict[str, str] 
     local_files_only: bool
-    token: str | bool | None
-    revision: str | None
+    token: str | bool 
+    revision: str 
     subfolder: str
-    commit_hash: str | None
+    commit_hash: str 
 
 
 # Determine default cache directory.
@@ -99,9 +99,9 @@ CLOUDFRONT_DISTRIB_PREFIX = "https://cdn.huggingface.co"
 def _get_cache_file_to_return(
     path_or_repo_id: str,
     full_filename: str,
-    cache_dir: str | Path | None = None,
-    revision: str | None = None,
-    repo_type: str | None = None,
+    cache_dir: str | Path  = None,
+    revision: str  = None,
+    repo_type: str  = None,
 ):
     # We try to see if we have a cached version (not up to date):
     resolved_file = try_to_load_from_cache(
@@ -116,9 +116,9 @@ def list_repo_templates(
     repo_id: str,
     *,
     local_files_only: bool,
-    revision: str | None = None,
-    cache_dir: str | None = None,
-    token: str | bool | None = None,
+    revision: str  = None,
+    cache_dir: str  = None,
+    token: str | bool  = None,
 ) -> list[str]:
     """List template files from a repo.
 
@@ -183,7 +183,7 @@ def define_sagemaker_information():
     return sagemaker_object
 
 
-def http_user_agent(user_agent: dict | str | None = None) -> str:
+def http_user_agent(user_agent: dict | str  = None) -> str:
     """
     Formats a user-agent string with basic info about a request.
     """
@@ -204,7 +204,7 @@ def http_user_agent(user_agent: dict | str | None = None) -> str:
     return ua
 
 
-def extract_commit_hash(resolved_file: str | None, commit_hash: str | None) -> str | None:
+def extract_commit_hash(resolved_file: str , commit_hash: str ) -> str :
     """
     Extracts the commit hash from a resolved filename toward a cache file.
     """
@@ -222,7 +222,7 @@ def cached_file(
     path_or_repo_id: str | os.PathLike,
     filename: str,
     **kwargs,
-) -> str | None:
+) -> str :
     """
     Tries to locate a file in a local folder and repo, downloads and cache it if necessary.
 
@@ -281,21 +281,21 @@ def cached_file(
 def cached_files(
     path_or_repo_id: str | os.PathLike,
     filenames: list[str],
-    cache_dir: str | os.PathLike | None = None,
+    cache_dir: str | os.PathLike  = None,
     force_download: bool = False,
-    proxies: dict[str, str] | None = None,
-    token: bool | str | None = None,
-    revision: str | None = None,
+    proxies: dict[str, str]  = None,
+    token: bool | str  = None,
+    revision: str  = None,
     local_files_only: bool = False,
     subfolder: str = "",
-    repo_type: str | None = None,
-    user_agent: str | dict[str, str] | None = None,
+    repo_type: str  = None,
+    user_agent: str | dict[str, str]  = None,
     _raise_exceptions_for_gated_repo: bool = True,
     _raise_exceptions_for_missing_entries: bool = True,
     _raise_exceptions_for_connection_errors: bool = True,
-    _commit_hash: str | None = None,
+    _commit_hash: str  = None,
     **deprecated_kwargs,
-) -> str | None:
+) -> str :
     """
     Tries to locate several files in a local folder and repo, downloads and cache them if necessary.
 
@@ -536,13 +536,13 @@ def cached_files(
 def has_file(
     path_or_repo: str | os.PathLike,
     filename: str,
-    revision: str | None = None,
-    proxies: dict[str, str] | None = None,
-    token: bool | str | None = None,
+    revision: str  = None,
+    proxies: dict[str, str]  = None,
+    token: bool | str  = None,
     *,
     local_files_only: bool = False,
-    cache_dir: str | Path | None = None,
-    repo_type: str | None = None,
+    cache_dir: str | Path  = None,
+    repo_type: str  = None,
     **deprecated_kwargs,
 ):
     """
@@ -634,11 +634,11 @@ class PushToHubMixin:
         working_dir: str | os.PathLike,
         repo_id: str,
         files_timestamps: dict[str, float],
-        commit_message: str | None = None,
-        token: bool | str | None = None,
+        commit_message: str  = None,
+        token: bool | str  = None,
         create_pr: bool = False,
-        revision: str | None = None,
-        commit_description: str | None = None,
+        revision: str  = None,
+        commit_description: str  = None,
     ):
         """
         Uploads all modified files in `working_dir` to `repo_id`, based on `files_timestamps`.
@@ -713,16 +713,16 @@ class PushToHubMixin:
         repo_id: str,
         *,
         # Commit details
-        commit_message: str | None = None,
-        commit_description: str | None = None,
+        commit_message: str  = None,
+        commit_description: str  = None,
         # Repo / upload details
-        private: bool | None = None,
-        token: bool | str | None = None,
-        revision: str | None = None,
+        private: bool  = None,
+        token: bool | str  = None,
+        revision: str  = None,
         create_pr: bool = False,
         # Serialization details
-        max_shard_size: int | str | None = "50GB",
-        tags: list[str] | None = None,
+        max_shard_size: int | str  = "50GB",
+        tags: list[str]  = None,
     ) -> str:
         """
         Upload the {object_files} to the 🤗 Model Hub.
@@ -883,7 +883,7 @@ def get_checkpoint_shard_files(
     return cached_filenames, sharded_metadata
 
 
-def create_and_tag_model_card(repo_id: str, tags: list[str] | None = None, token: str | None = None) -> ModelCard:
+def create_and_tag_model_card(repo_id: str, tags: list[str]  = None, token: str  = None) -> ModelCard:
     """
     Creates or loads an existing model card and tags it.
 
@@ -920,7 +920,7 @@ class PushInProgress:
     Internal class to keep track of a push in progress (which might contain multiple `Future` jobs).
     """
 
-    def __init__(self, jobs: futures.Future | None = None) -> None:
+    def __init__(self, jobs: futures.Future  = None) -> None:
         self.jobs = [] if jobs is None else jobs
 
     def is_done(self):

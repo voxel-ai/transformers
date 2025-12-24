@@ -282,7 +282,7 @@ def get_polynomial_decay_schedule_with_warmup(
     return LambdaLR(optimizer, lr_lambda, last_epoch)
 
 
-def _get_inverse_sqrt_schedule_lr_lambda(current_step: int, *, num_warmup_steps: int, timescale: int | None = None):
+def _get_inverse_sqrt_schedule_lr_lambda(current_step: int, *, num_warmup_steps: int, timescale: int  = None):
     if current_step < num_warmup_steps:
         return float(current_step) / float(max(1, num_warmup_steps))
     shift = timescale - num_warmup_steps
@@ -291,7 +291,7 @@ def _get_inverse_sqrt_schedule_lr_lambda(current_step: int, *, num_warmup_steps:
 
 
 def get_inverse_sqrt_schedule(
-    optimizer: Optimizer, num_warmup_steps: int, timescale: int | None = None, last_epoch: int = -1
+    optimizer: Optimizer, num_warmup_steps: int, timescale: int  = None, last_epoch: int = -1
 ):
     """
     Create a schedule with an inverse square-root learning rate, from the initial lr set in the optimizer, after a
@@ -337,8 +337,8 @@ def get_cosine_with_min_lr_schedule_with_warmup(
     num_training_steps: int,
     num_cycles: float = 0.5,
     last_epoch: int = -1,
-    min_lr: float | None = None,
-    min_lr_rate: float | None = None,
+    min_lr: float  = None,
+    min_lr_rate: float  = None,
 ):
     """
     Create a schedule with a learning rate that decreases following the values of the cosine function between the
@@ -390,7 +390,7 @@ def _get_cosine_with_min_lr_schedule_with_warmup_lr_rate_lambda(
     num_training_steps: int,
     num_cycles: float,
     min_lr_rate: float = 0.0,
-    warmup_lr_rate: float | None = None,
+    warmup_lr_rate: float  = None,
 ):
     current_step = float(current_step)
     num_warmup_steps = float(num_warmup_steps)
@@ -414,9 +414,9 @@ def get_cosine_with_min_lr_schedule_with_warmup_lr_rate(
     num_training_steps: int,
     num_cycles: float = 0.5,
     last_epoch: int = -1,
-    min_lr: float | None = None,
-    min_lr_rate: float | None = None,
-    warmup_lr_rate: float | None = None,
+    min_lr: float  = None,
+    min_lr_rate: float  = None,
+    warmup_lr_rate: float  = None,
 ):
     """
     Create a schedule with a learning rate that decreases following the values of the cosine function between the
@@ -506,8 +506,8 @@ def get_wsd_schedule(
     optimizer: Optimizer,
     num_warmup_steps: int,
     num_decay_steps: int,
-    num_training_steps: int | None = None,
-    num_stable_steps: int | None = None,
+    num_training_steps: int  = None,
+    num_stable_steps: int  = None,
     warmup_type: str = "linear",
     decay_type: str = "cosine",
     min_lr_ratio: float = 0,
@@ -593,9 +593,9 @@ TYPE_TO_SCHEDULER_FUNCTION = {
 def get_scheduler(
     name: str | SchedulerType,
     optimizer: Optimizer,
-    num_warmup_steps: int | None = None,
-    num_training_steps: int | None = None,
-    scheduler_specific_kwargs: dict | None = None,
+    num_warmup_steps: int  = None,
+    num_training_steps: int  = None,
+    scheduler_specific_kwargs: dict  = None,
 ):
     """
     Unified API to get any scheduler from its name.

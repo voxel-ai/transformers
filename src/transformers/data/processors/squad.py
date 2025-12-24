@@ -692,8 +692,8 @@ class SquadFeatures:
         start_position,
         end_position,
         is_impossible,
-        qas_id: str | None = None,
-        encoding: BatchEncoding | None = None,
+        qas_id: str  = None,
+        encoding: BatchEncoding  = None,
     ):
         self.input_ids = input_ids
         self.attention_mask = attention_mask

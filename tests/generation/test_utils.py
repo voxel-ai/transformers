@@ -906,7 +906,7 @@ class GenerationTesterMixin:
 
     @pytest.mark.generate
     def test_left_padding_compatibility(
-        self, unpadded_custom_inputs: dict | None = None, padded_custom_inputs: dict | None = None
+        self, unpadded_custom_inputs: dict  = None, padded_custom_inputs: dict  = None
     ):
         """
         Tests that adding left-padding yields the same logits as the original input. Exposes arguments for custom

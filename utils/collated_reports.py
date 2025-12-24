@@ -32,7 +32,7 @@ def simplify_gpu_name(gpu_name: str, simplified_names: list[str]) -> str:
     return gpu_name
 
 
-def parse_short_summary_line(line: str) -> tuple[str | None, int]:
+def parse_short_summary_line(line: str) -> tuple[str , int]:
     if line.startswith("PASSED"):
         return "passed", 1
     if line.startswith("FAILED"):
@@ -53,7 +53,7 @@ def validate_path(p: str) -> Path:
     return path
 
 
-def get_gpu_name(gpu_name: str | None) -> str:
+def get_gpu_name(gpu_name: str ) -> str:
     # Get GPU name if available
     if gpu_name is None:
         try:
@@ -70,7 +70,7 @@ def get_gpu_name(gpu_name: str | None) -> str:
     return gpu_name
 
 
-def get_commit_hash(commit_hash: str | None) -> str:
+def get_commit_hash(commit_hash: str ) -> str:
     # Get commit hash if available
     if commit_hash is None:
         try:
@@ -88,8 +88,8 @@ class Args:
     machine_type: str
     gpu_name: str
     commit_hash: str
-    job: str | None
-    report_repo_id: str | None
+    job: str 
+    report_repo_id: str 
 
 
 def get_arguments(args: argparse.Namespace) -> Args:

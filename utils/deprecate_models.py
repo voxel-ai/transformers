@@ -76,7 +76,7 @@ def insert_tip_to_model_doc(model_doc_path, tip_message):
         f.write("\n".join(new_model_lines))
 
 
-def get_model_doc_path(model: str) -> tuple[str | None, str | None]:
+def get_model_doc_path(model: str) -> tuple[str , str ]:
     # Possible variants of the model name in the model doc path
     model_names = [model, model.replace("_", "-"), model.replace("_", "")]
 

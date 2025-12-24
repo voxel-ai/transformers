@@ -1094,7 +1094,7 @@ def parse_docstring(docstring, max_indent_level=0, return_intro=False):
     return params, remainder_docstring
 
 
-def contains_type(type_hint, target_type) -> tuple[bool, object | None]:
+def contains_type(type_hint, target_type) -> tuple[bool, object ]:
     """
     Check if a "nested" type hint contains a specific target type,
     return the first-level type containing the target_type if found.

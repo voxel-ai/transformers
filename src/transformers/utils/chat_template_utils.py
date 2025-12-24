@@ -199,7 +199,7 @@ def _convert_type_hints_to_json_schema(func: Callable) -> dict:
     return schema
 
 
-def parse_google_format_docstring(docstring: str) -> tuple[str | None, dict | None, str | None]:
+def parse_google_format_docstring(docstring: str) -> tuple[str , dict , str ]:
     """
     Parses a Google-style docstring to extract the function description,
     argument descriptions, and return description.
@@ -463,9 +463,9 @@ def _compile_jinja_template(chat_template):
 
 def render_jinja_template(
     conversations: list[ChatType],
-    tools: list[dict | Callable] | None = None,
-    documents: ChatType | None = None,
-    chat_template: str | None = None,
+    tools: list[dict | Callable]  = None,
+    documents: ChatType  = None,
+    chat_template: str  = None,
     return_assistant_tokens_mask: bool = False,
     continue_final_message: bool = False,
     add_generation_prompt: bool = False,

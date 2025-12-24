@@ -744,7 +744,7 @@ class GenerationConfig(PushToHubMixin):
     def save_pretrained(
         self,
         save_directory: str | os.PathLike,
-        config_file_name: str | os.PathLike | None = None,
+        config_file_name: str | os.PathLike  = None,
         push_to_hub: bool = False,
         **kwargs,
     ):
@@ -804,11 +804,11 @@ class GenerationConfig(PushToHubMixin):
     def from_pretrained(
         cls,
         pretrained_model_name: str | os.PathLike,
-        config_file_name: str | os.PathLike | None = None,
-        cache_dir: str | os.PathLike | None = None,
+        config_file_name: str | os.PathLike  = None,
+        cache_dir: str | os.PathLike  = None,
         force_download: bool = False,
         local_files_only: bool = False,
-        token: str | bool | None = None,
+        token: str | bool  = None,
         revision: str = "main",
         **kwargs,
     ) -> "GenerationConfig":
@@ -1063,7 +1063,7 @@ class GenerationConfig(PushToHubMixin):
         return output
 
     def to_json_string(
-        self, use_diff: bool = True, ignore_metadata: bool = False, keys_to_pop: list[str] | None = None
+        self, use_diff: bool = True, ignore_metadata: bool = False, keys_to_pop: list[str]  = None
     ) -> str:
         """
         Serializes this instance to a JSON string.
@@ -1115,7 +1115,7 @@ class GenerationConfig(PushToHubMixin):
         return json.dumps(config_dict, indent=2, sort_keys=True) + "\n"
 
     def to_json_file(
-        self, json_file_path: str | os.PathLike, use_diff: bool = True, keys_to_pop: list[str] | None = None
+        self, json_file_path: str | os.PathLike, use_diff: bool = True, keys_to_pop: list[str]  = None
     ) -> None:
         """
         Save this instance to a JSON file.
@@ -1502,10 +1502,10 @@ class CompileConfig:
     """
 
     fullgraph: bool = False
-    dynamic: bool | None = None
+    dynamic: bool  = None
     backend: str | Callable = "inductor"
     mode: str = "reduce-overhead"
-    options: dict | None = None
+    options: dict  = None
     # Used to flag our `generate` call to compile on e.g. CPU. Often not optimal, but useful for testing purposes.
     _compile_all_devices = None
 

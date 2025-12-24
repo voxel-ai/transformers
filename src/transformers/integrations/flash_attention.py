@@ -32,12 +32,12 @@ def flash_attention_forward(
     query: torch.Tensor,
     key: torch.Tensor,
     value: torch.Tensor,
-    attention_mask: torch.Tensor | None,
+    attention_mask: torch.Tensor ,
     dropout: float = 0.0,
-    scaling: float | None = None,
-    sliding_window: int | None = None,
-    softcap: float | None = None,
-    is_causal: bool | None = None,
+    scaling: float  = None,
+    sliding_window: int  = None,
+    softcap: float  = None,
+    is_causal: bool  = None,
     **kwargs,
 ) -> tuple[torch.Tensor, None]:
     if kwargs.get("output_attentions", False):

@@ -46,7 +46,7 @@ _re_intro_mapping = re.compile(r"[A-Z_]+_MAPPING(\s+|_[A-Z_]+\s+)=\s+OrderedDict
 _re_identifier = re.compile(r'\s*\(\s*"(\S[^"]+)"')
 
 
-def sort_auto_mapping(fname: str, overwrite: bool = False) -> bool | None:
+def sort_auto_mapping(fname: str, overwrite: bool = False) -> bool :
     """
     Sort all auto mappings in a file.
 

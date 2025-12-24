@@ -77,8 +77,8 @@ class Gemma3nAudioFeatureExtractionTester:
         dither: float = 0.0,
         input_scale_factor: float = 1.0,
         mel_floor: float = 1e-5,
-        per_bin_mean: Sequence[float] | None = None,
-        per_bin_stddev: Sequence[float] | None = None,
+        per_bin_mean: Sequence[float]  = None,
+        per_bin_stddev: Sequence[float]  = None,
     ):
         self.parent = parent
         self.batch_size = batch_size

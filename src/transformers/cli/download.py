@@ -18,7 +18,7 @@ import typer
 
 def download(
     model_id: Annotated[str, typer.Argument(help="The model ID to download")],
-    cache_dir: Annotated[str | None, typer.Option(help="Directory where to save files.")] = None,
+    cache_dir: Annotated[str , typer.Option(help="Directory where to save files.")] = None,
     force_download: Annotated[
         bool, typer.Option(help="If set, the files will be downloaded even if they are already cached locally.")
     ] = False,

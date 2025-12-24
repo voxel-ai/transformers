@@ -115,10 +115,10 @@ class SquadDataset(Dataset):
         self,
         args: SquadDataTrainingArguments,
         tokenizer: PreTrainedTokenizer,
-        limit_length: int | None = None,
+        limit_length: int  = None,
         mode: str | Split = Split.train,
         is_language_sensitive: bool = False,
-        cache_dir: str | None = None,
+        cache_dir: str  = None,
         dataset_format: str = "pt",
     ):
         self.args = args

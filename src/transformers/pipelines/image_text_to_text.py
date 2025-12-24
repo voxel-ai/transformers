@@ -198,16 +198,16 @@ class ImageTextToTextPipeline(Pipeline):
     @overload
     def __call__(
         self,
-        image: Union[str, "Image.Image"] | None = None,
-        text: str | None = None,
+        image: Union[str, "Image.Image"]  = None,
+        text: str  = None,
         **kwargs: Any,
     ) -> list[dict[str, Any]]: ...
 
     @overload
     def __call__(
         self,
-        image: list[str] | list["Image.Image"] | None = None,
-        text: list[str] | None = None,
+        image: list[str] | list["Image.Image"]  = None,
+        text: list[str]  = None,
         **kwargs: Any,
     ) -> list[list[dict[str, Any]]]: ...
 
@@ -216,8 +216,8 @@ class ImageTextToTextPipeline(Pipeline):
         images: Union[
             str, list[str], list[list[str]], "Image.Image", list["Image.Image"], list[list["Image.Image"]], list[dict]
         ]
-        | None = None,
-        text: str | list[str] | list[dict] | None = None,
+         = None,
+        text: str | list[str] | list[dict]  = None,
         **kwargs,
     ) -> list[dict[str, Any]] | list[list[dict[str, Any]]]:
         """

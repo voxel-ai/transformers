@@ -75,7 +75,7 @@ class ZeroShotObjectDetectionPipeline(ChunkPipeline):
     def __call__(
         self,
         image: Union[str, "Image.Image", list[dict[str, Any]]],
-        candidate_labels: str | list[str] | None = None,
+        candidate_labels: str | list[str]  = None,
         **kwargs: Any,
     ) -> list[dict[str, Any]] | list[list[dict[str, Any]]]:
         """

@@ -22,7 +22,7 @@ def get_module_from_name(module, tensor_name: str) -> tuple[Any, str]:
     return module, tensor_name
 
 
-def should_convert_module(full_name, patterns: list[str] | None = None):
+def should_convert_module(full_name, patterns: list[str]  = None):
     if patterns is None:
         return True
 

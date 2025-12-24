@@ -53,21 +53,21 @@ logger = logging.get_logger(__name__)
 class Seq2SeqTrainer(Trainer):
     def __init__(
         self,
-        model: Union["PreTrainedModel", nn.Module] | None = None,
+        model: Union["PreTrainedModel", nn.Module]  = None,
         args: Optional["TrainingArguments"] = None,
         data_collator: Optional["DataCollator"] = None,
-        train_dataset: Union[Dataset, "IterableDataset", "datasets.Dataset"] | None = None,
-        eval_dataset: Dataset | dict[str, Dataset] | None = None,
+        train_dataset: Union[Dataset, "IterableDataset", "datasets.Dataset"]  = None,
+        eval_dataset: Dataset | dict[str, Dataset]  = None,
         processing_class: Union[
             "PreTrainedTokenizerBase", "BaseImageProcessor", "FeatureExtractionMixin", "ProcessorMixin"
         ]
-        | None = None,
-        model_init: Callable[[], "PreTrainedModel"] | None = None,
-        compute_loss_func: Callable | None = None,
-        compute_metrics: Callable[["EvalPrediction"], dict] | None = None,
-        callbacks: list["TrainerCallback"] | None = None,
-        optimizers: tuple[torch.optim.Optimizer | None, torch.optim.lr_scheduler.LambdaLR | None] = (None, None),
-        preprocess_logits_for_metrics: Callable[[torch.Tensor, torch.Tensor], torch.Tensor] | None = None,
+         = None,
+        model_init: Callable[[], "PreTrainedModel"]  = None,
+        compute_loss_func: Callable  = None,
+        compute_metrics: Callable[["EvalPrediction"], dict]  = None,
+        callbacks: list["TrainerCallback"]  = None,
+        optimizers: tuple[torch.optim.Optimizer , torch.optim.lr_scheduler.LambdaLR ] = (None, None),
+        preprocess_logits_for_metrics: Callable[[torch.Tensor, torch.Tensor], torch.Tensor]  = None,
     ):
         super().__init__(
             model=model,
@@ -136,8 +136,8 @@ class Seq2SeqTrainer(Trainer):
 
     def evaluate(
         self,
-        eval_dataset: Dataset | None = None,
-        ignore_keys: list[str] | None = None,
+        eval_dataset: Dataset  = None,
+        ignore_keys: list[str]  = None,
         metric_key_prefix: str = "eval",
         **gen_kwargs,
     ) -> dict[str, float]:
@@ -193,7 +193,7 @@ class Seq2SeqTrainer(Trainer):
     def predict(
         self,
         test_dataset: Dataset,
-        ignore_keys: list[str] | None = None,
+        ignore_keys: list[str]  = None,
         metric_key_prefix: str = "test",
         **gen_kwargs,
     ) -> "PredictionOutput":
@@ -259,9 +259,9 @@ class Seq2SeqTrainer(Trainer):
         model: nn.Module,
         inputs: dict[str, torch.Tensor | Any],
         prediction_loss_only: bool,
-        ignore_keys: list[str] | None = None,
+        ignore_keys: list[str]  = None,
         **gen_kwargs,
-    ) -> tuple[float | None, torch.Tensor | None, torch.Tensor | None]:
+    ) -> tuple[float , torch.Tensor , torch.Tensor ]:
         """
         Perform an evaluation step on `model` using `inputs`.
 

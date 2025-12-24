@@ -315,7 +315,7 @@ class TimedModel:
         self,
         model: "PreTrainedModel",
         timeout_seconds: int,
-        processor: Union["ProcessorMixin", "PreTrainedTokenizerFast"] | None = None,
+        processor: Union["ProcessorMixin", "PreTrainedTokenizerFast"]  = None,
     ):
         self.model = model
         self._name_or_path = str(model.name_or_path)
@@ -372,7 +372,7 @@ class Serve:
             ),
         ] = "auto",
         dtype: Annotated[
-            str | None,
+            str ,
             typer.Option(
                 help="Override the default `torch.dtype` and load the model under this dtype. If `'auto'` is passed, the dtype will be automatically derived from the model's weights."
             ),
@@ -381,7 +381,7 @@ class Serve:
             bool, typer.Option(help="Whether to trust remote code when loading a model.")
         ] = False,
         attn_implementation: Annotated[
-            str | None,
+            str ,
             typer.Option(
                 help="Which attention implementation to use; you can run --attn_implementation=flash_attention_2, in which case you must install this manually by running `pip install flash-attn --no-build-isolation`."
             ),
@@ -399,7 +399,7 @@ class Serve:
             str, typer.Option(help="Logging level as a string. Example: 'info' or 'warning'.")
         ] = "info",
         default_seed: Annotated[
-            int | None, typer.Option(help="The default seed for torch, should be an integer.")
+            int , typer.Option(help="The default seed for torch, should be an integer.")
         ] = None,
         enable_cors: Annotated[
             bool,
@@ -409,7 +409,7 @@ class Serve:
         ] = False,
         input_validation: Annotated[bool, typer.Option(help="Whether to turn on strict input validation.")] = False,
         force_model: Annotated[
-            str | None,
+            str ,
             typer.Option(
                 help="Name of the model to be forced on all requests. This is useful for testing Apps that don't allow changing models in the request."
             ),
@@ -454,7 +454,7 @@ class Serve:
         # Internal state:
         # 1. Tracks models in memory, to prevent reloading the model unnecessarily
         self.loaded_models: dict[str, TimedModel] = {}
-        self.running_continuous_batching_manager: ContinuousBatchingManager | None = None
+        self.running_continuous_batching_manager: ContinuousBatchingManager  = None
 
         # 2. preserves information about the last call and last KV cache, to determine whether we can reuse the KV
         # cache and avoid re-running prefill
@@ -657,12 +657,12 @@ class Serve:
     def build_chat_completion_chunk(
         self,
         request_id: str = "",
-        content: int | None = None,
-        model: str | None = None,
-        role: str | None = None,
-        finish_reason: str | None = None,
-        tool_calls: list[ChoiceDeltaToolCall] | None = None,
-        decode_stream: DecodeStream | None = None,
+        content: int  = None,
+        model: str  = None,
+        role: str  = None,
+        finish_reason: str  = None,
+        tool_calls: list[ChoiceDeltaToolCall]  = None,
+        decode_stream: DecodeStream  = None,
         tokenizer: Optional["PreTrainedTokenizerFast"] = None,
     ) -> ChatCompletionChunk:
         """
@@ -731,7 +731,7 @@ class Serve:
 
     @staticmethod
     @lru_cache
-    def get_gen_models(cache_dir: str | None = None) -> list[dict[str, any]]:
+    def get_gen_models(cache_dir: str  = None) -> list[dict[str, any]]:
         """
         List LLMs and VLMs in the cache.
         """

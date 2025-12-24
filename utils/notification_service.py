@@ -142,7 +142,7 @@ class Message:
         ci_title: str,
         model_results: dict,
         additional_results: dict,
-        selected_warnings: list | None = None,
+        selected_warnings: list  = None,
         prev_ci_artifacts=None,
         other_ci_artifacts=None,
     ):
@@ -944,7 +944,7 @@ class Message:
                     time.sleep(1)
 
 
-def retrieve_artifact(artifact_path: str, gpu: str | None):
+def retrieve_artifact(artifact_path: str, gpu: str ):
     if gpu not in [None, "single", "multi"]:
         raise ValueError(f"Invalid GPU for artifact. Passed GPU: `{gpu}`.")
 
@@ -973,7 +973,7 @@ def retrieve_available_artifacts():
         def __str__(self):
             return self.name
 
-        def add_path(self, path: str, gpu: str | None = None):
+        def add_path(self, path: str, gpu: str  = None):
             self.paths.append({"name": self.name, "path": path, "gpu": gpu})
 
     _available_artifacts: dict[str, Artifact] = {}

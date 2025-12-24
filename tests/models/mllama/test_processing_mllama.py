@@ -57,7 +57,7 @@ class MllamaProcessorTest(ProcessorTesterMixin, unittest.TestCase):
         pass
 
     # Override as Mllama needs images to be an explicitly nested batch
-    def prepare_image_inputs(self, batch_size: int | None = None):
+    def prepare_image_inputs(self, batch_size: int  = None):
         """This function prepares a list of PIL images for testing"""
         images = super().prepare_image_inputs(batch_size)
         if isinstance(images, (list, tuple)):

@@ -162,7 +162,7 @@ def build_attention_mask(
 @dataclass
 class PagedAttentionArgs:
     input_ids: torch.Tensor
-    attention_mask: torch.Tensor | None
+    attention_mask: torch.Tensor 
     position_ids: torch.Tensor
     cumulative_seqlens_q: torch.Tensor
     cumulative_seqlens_k: torch.Tensor
@@ -228,9 +228,9 @@ class ContinuousBatchProcessor:
         # Cuda graphs for the generation step
         self.q_padding_intervals = q_padding_intervals
         self.kv_padding_intervals = kv_padding_intervals
-        self._graphs: dict[tuple[int, int], torch.cuda.CUDAGraph] | None = {} if use_cuda_graph else None
+        self._graphs: dict[tuple[int, int], torch.cuda.CUDAGraph]  = {} if use_cuda_graph else None
         # Compile-related arguments
-        self.compile_config: CompileConfig | None = getattr(generation_config, "compile_config", None)
+        self.compile_config: CompileConfig  = getattr(generation_config, "compile_config", None)
         self._forward_process_and_sample_is_compiled = False
 
         self._pad_inputs = use_cuda_graph or (self.compile_config is not None and not self.compile_config.dynamic)
@@ -779,7 +779,7 @@ class ContinuousBatchingManager:
         self.logit_processor = self.model._get_logits_processor(generation_config)
         self.profile = getattr(generation_config, "profile", False)  # TODO: not supported yet
         self.manual_eviction = manual_eviction
-        self.batch_processor: ContinuousBatchProcessor | None = None
+        self.batch_processor: ContinuousBatchProcessor  = None
         self._allow_block_sharing = allow_block_sharing
         self._use_prefix_sharing = allow_block_sharing  # approximation until the cache is created
 
@@ -801,10 +801,10 @@ class ContinuousBatchingManager:
 
     def _decide_use_cuda_graphs(
         self,
-        use_cuda_graph: bool | None,
+        use_cuda_graph: bool ,
         num_q_padding_intervals: int,
         num_kv_padding_intervals: int,
-        compile_config: CompileConfig | None,
+        compile_config: CompileConfig ,
     ) -> bool:
         """Returns whether or not to use cuda graphs for continuous batching, depending on the following criteria:
         - (use_cuda_graph) which is the user choice
@@ -856,7 +856,7 @@ class ContinuousBatchingManager:
         return self._generation_thread is not None and self._generation_thread.is_alive()
 
     # NOTE: don't forget to update `continuous_batching_context_manager` when changing this method's definition
-    def stop(self, block: bool = True, timeout: float | None = None) -> None:
+    def stop(self, block: bool = True, timeout: float  = None) -> None:
         """Signal the background thread to stop.
 
         Args:
@@ -885,7 +885,7 @@ class ContinuousBatchingManager:
 
         self.batch_processor = None
 
-    def join(self, stop_trigger_time: float, timeout: float | None = None) -> None:
+    def join(self, stop_trigger_time: float, timeout: float  = None) -> None:
         """Wait for the background thread to finish.
 
         Args:
@@ -903,8 +903,8 @@ class ContinuousBatchingManager:
     def add_request(
         self,
         input_ids: list[int],
-        request_id: str | None = None,
-        max_new_tokens: int | None = None,
+        request_id: str  = None,
+        max_new_tokens: int  = None,
         streaming: bool = False,
         record_timestamps: bool = False,
     ) -> str:
@@ -943,7 +943,7 @@ class ContinuousBatchingManager:
     def add_requests(
         self,
         inputs: list[list[int]],
-        max_new_tokens: int | None = None,
+        max_new_tokens: int  = None,
         streaming: bool = False,
         record_timestamps: bool = False,
     ) -> None:
@@ -966,7 +966,7 @@ class ContinuousBatchingManager:
             self.batch_processor.scheduler.set_request_cancellation(request_id)
 
     # TODO:handle benchmarking properly when updating / fixing the requeue logic
-    def get_result(self, request_id: str | None = None, timeout: float | None = None) -> GenerationOutput | None:
+    def get_result(self, request_id: str  = None, timeout: float  = None) -> GenerationOutput :
         """Retrieve one result from the output queue.
 
         Args:
@@ -1012,7 +1012,7 @@ class ContinuousBatchingManager:
 
     def _run_generation_loop(self) -> None:
         """Main processing loop running in the background thread."""
-        batch_processor: ContinuousBatchProcessor | None = None
+        batch_processor: ContinuousBatchProcessor  = None
         try:
             t0 = perf_counter()
             paged_attention_cache = PagedAttentionCache(
@@ -1085,7 +1085,7 @@ class ContinuousBatchingManager:
         batch_processor.update_batch()
 
     @traced
-    def _handle_critical_error(self, error: Exception, batch_processor: ContinuousBatchProcessor | None) -> None:
+    def _handle_critical_error(self, error: Exception, batch_processor: ContinuousBatchProcessor ) -> None:
         """Handle critical errors that terminate the generation loop."""
         # Signal stop
         self.stop_event.set()
@@ -1118,14 +1118,14 @@ class ContinuousMixin:
     @contextmanager
     def continuous_batching_context_manager(
         self,
-        generation_config: GenerationConfig | None = None,
+        generation_config: GenerationConfig  = None,
         manual_eviction: bool = False,
         max_queue_size: int = 0,
         num_q_cuda_graphs: int = 0,
         num_kv_cuda_graphs: int = 0,
         allow_block_sharing: bool = True,
         block: bool = True,
-        timeout: float | None = None,
+        timeout: float  = None,
     ) -> Generator[ContinuousBatchingManager]:
         manager = self.init_continuous_batching(
             generation_config,
@@ -1147,7 +1147,7 @@ class ContinuousMixin:
     # NOTE: don't forget to update `continuous_batching_context_manager` when changing this method's definition
     def init_continuous_batching(
         self,
-        generation_config: GenerationConfig | None = None,
+        generation_config: GenerationConfig  = None,
         manual_eviction: bool = False,
         max_queue_size: int = 0,
         num_q_padding_intervals: int = 0,
@@ -1195,7 +1195,7 @@ class ContinuousMixin:
     def generate_batch(
         self,
         inputs: list[list[int]],
-        generation_config: GenerationConfig | None = None,
+        generation_config: GenerationConfig  = None,
         num_q_padding_intervals: int = 0,
         num_kv_padding_intervals: int = 0,
         allow_block_sharing: bool = True,

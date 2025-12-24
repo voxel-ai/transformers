@@ -219,7 +219,7 @@ def _write_tokenizer(
     output_path: Path,
     config: Olmo2Config,
     checkpoint_dir: str,
-    input_tokenizer_path: Path | None,
+    input_tokenizer_path: Path ,
 ) -> None:
     print(f"Saving a {GPT2TokenizerFast.__name__} to {output_path}.")
 

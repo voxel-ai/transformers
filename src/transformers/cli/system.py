@@ -40,7 +40,7 @@ from ..utils import (
 
 def env(
     accelerate_config_file: Annotated[
-        str | None,
+        str ,
         typer.Argument(help="The accelerate config file to use for the default values in the launching script."),
     ] = None,
 ) -> None:

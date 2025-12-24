@@ -589,7 +589,7 @@ class PythonBackend(PreTrainedTokenizerBase):
         self._update_total_vocab_size()
         return added_tokens
 
-    def _update_trie(self, unique_no_split_tokens: list[str] | None = None):
+    def _update_trie(self, unique_no_split_tokens: list[str]  = None):
         for token in self._added_tokens_decoder.values():
             if token.content not in self.tokens_trie._tokens:
                 self.tokens_trie.add(token.content)
@@ -695,18 +695,18 @@ class PythonBackend(PreTrainedTokenizerBase):
     def _encode_plus(
         self,
         text: TextInput | PreTokenizedInput | EncodedInput,
-        text_pair: TextInput | PreTokenizedInput | EncodedInput | None = None,
+        text_pair: TextInput | PreTokenizedInput | EncodedInput  = None,
         add_special_tokens: bool = True,
         padding_strategy: PaddingStrategy = PaddingStrategy.DO_NOT_PAD,
         truncation_strategy: TruncationStrategy = TruncationStrategy.DO_NOT_TRUNCATE,
-        max_length: int | None = None,
+        max_length: int  = None,
         stride: int = 0,
         is_split_into_words: bool = False,
-        pad_to_multiple_of: int | None = None,
-        padding_side: str | None = None,
-        return_tensors: str | TensorType | None = None,
-        return_token_type_ids: bool | None = None,
-        return_attention_mask: bool | None = None,
+        pad_to_multiple_of: int  = None,
+        padding_side: str  = None,
+        return_tensors: str | TensorType  = None,
+        return_token_type_ids: bool  = None,
+        return_attention_mask: bool  = None,
         return_overflowing_tokens: bool = False,
         return_special_tokens_mask: bool = False,
         return_length: bool = False,
@@ -856,7 +856,7 @@ class PythonBackend(PreTrainedTokenizerBase):
         return (text, kwargs)
 
     def build_inputs_with_special_tokens(
-        self, token_ids_0: list[int], token_ids_1: list[int] | None = None
+        self, token_ids_0: list[int], token_ids_1: list[int]  = None
     ) -> list[int]:
         """
         Build model inputs from a sequence or a pair of sequences by adding special tokens.
@@ -929,7 +929,7 @@ class PythonBackend(PreTrainedTokenizerBase):
             return token_ids_0 + token_ids_1
 
     def get_special_tokens_mask(
-        self, token_ids_0: list, token_ids_1: list | None = None, already_has_special_tokens: bool = False
+        self, token_ids_0: list, token_ids_1: list  = None, already_has_special_tokens: bool = False
     ) -> list[int]:
         """
         Retrieves sequence ids from a token list that has no special tokens added. This method is called when adding
@@ -1057,7 +1057,7 @@ class PythonBackend(PreTrainedTokenizerBase):
         self,
         token_ids: int | list[int],
         skip_special_tokens: bool = False,
-        clean_up_tokenization_spaces: bool | None = None,
+        clean_up_tokenization_spaces: bool  = None,
         **kwargs,
     ) -> str:
         """Decode token ids to string."""
@@ -1097,17 +1097,17 @@ class PythonBackend(PreTrainedTokenizerBase):
     def prepare_for_model(
         self,
         ids: list[int],
-        pair_ids: list[int] | None = None,
+        pair_ids: list[int]  = None,
         add_special_tokens: bool = True,
         padding: bool | str | PaddingStrategy = False,
         truncation: bool | str | TruncationStrategy = False,
-        max_length: int | None = None,
+        max_length: int  = None,
         stride: int = 0,
-        pad_to_multiple_of: int | None = None,
-        padding_side: str | None = None,
-        return_tensors: str | TensorType | None = None,
-        return_token_type_ids: bool | None = None,
-        return_attention_mask: bool | None = None,
+        pad_to_multiple_of: int  = None,
+        padding_side: str  = None,
+        return_tensors: str | TensorType  = None,
+        return_token_type_ids: bool  = None,
+        return_attention_mask: bool  = None,
         return_overflowing_tokens: bool = False,
         return_special_tokens_mask: bool = False,
         return_length: bool = False,
@@ -1207,7 +1207,7 @@ class PythonBackend(PreTrainedTokenizerBase):
     def truncate_sequences(
         self,
         ids: list[int],
-        pair_ids: list[int] | None = None,
+        pair_ids: list[int]  = None,
         num_tokens_to_remove: int = 0,
         truncation_strategy: str | TruncationStrategy = "longest_first",
         stride: int = 0,
@@ -1272,7 +1272,7 @@ class PythonBackend(PreTrainedTokenizerBase):
         return ids, pair_ids, overflowing_tokens
 
     def create_token_type_ids_from_sequences(
-        self, token_ids_0: list[int], token_ids_1: list[int] | None = None
+        self, token_ids_0: list[int], token_ids_1: list[int]  = None
     ) -> list[int]:
         """
         Create a mask from the two sequences passed to be used in a sequence-pair classification task.
@@ -1335,7 +1335,7 @@ class PythonBackend(PreTrainedTokenizerBase):
             # All zeros pattern (default): everything gets 0s
             return [0] * (seq0_len + seq1_len)
 
-    def save_vocabulary(self, save_directory: str, filename_prefix: str | None = None) -> tuple[str, ...]:
+    def save_vocabulary(self, save_directory: str, filename_prefix: str  = None) -> tuple[str, ...]:
         """
         Default implementation for common vocabulary saving patterns.
         Saves self.encoder/self.vocab as JSON, optionally with self.bpe_ranks as merges.

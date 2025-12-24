@@ -192,7 +192,7 @@ class AutoHfQuantizer:
     def merge_quantization_configs(
         cls,
         quantization_config: dict | QuantizationConfigMixin,
-        quantization_config_from_args: QuantizationConfigMixin | None,
+        quantization_config_from_args: QuantizationConfigMixin ,
     ):
         """
         handles situations where both quantization_config from args and quantization_config from model config are present.

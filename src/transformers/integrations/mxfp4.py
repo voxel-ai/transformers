@@ -84,7 +84,7 @@ class Mxfp4Quantize(ConversionOps):
         input_dict: dict[str, torch.Tensor],
         model: Optional[torch.nn.Module] = None,
         missing_keys: Optional[list[str]] = None,
-        full_layer_name: str | None = None,
+        full_layer_name: str  = None,
         **kwargs,
     ) -> dict[str, torch.Tensor]:
         _, value = tuple(input_dict.items())[0]
@@ -131,7 +131,7 @@ class Mxfp4Dequantize(ConversionOps):
         self,
         input_dict: dict[str, torch.Tensor],
         model: Optional[torch.nn.Module] = None,
-        full_layer_name: str | None = None,
+        full_layer_name: str  = None,
         missing_keys=None,
         **kwargs,
     ) -> dict[str, torch.Tensor]:
@@ -160,7 +160,7 @@ class Mxfp4Deserialize(ConversionOps):
         self,
         input_dict: dict[str, torch.Tensor],
         model: Optional[torch.nn.Module] = None,
-        full_layer_name: str | None = None,
+        full_layer_name: str  = None,
         missing_keys: Optional[list[str]] = None,
         **kwargs,
     ) -> dict[str, torch.Tensor]:
@@ -594,7 +594,7 @@ def swizzle_mxfp4_convertops(blocks, scales, module, proj, target_device, triton
     )
 
 
-def replace_with_mxfp4_linear(model, quantization_config=None, modules_to_not_convert: list[str] | None = None):
+def replace_with_mxfp4_linear(model, quantization_config=None, modules_to_not_convert: list[str]  = None):
     """
     Public method that replaces the expert layers of the given model with mxfp4 quantized layers.
 

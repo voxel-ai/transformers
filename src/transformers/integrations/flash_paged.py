@@ -9,7 +9,7 @@ def paged_attention_forward(
     q: torch.Tensor,
     k: torch.Tensor,
     v: torch.Tensor,
-    attention_mask: torch.Tensor | None = None,
+    attention_mask: torch.Tensor  = None,
     cache: PagedAttentionCache = None,
     cu_seq_lens_q=None,
     cu_seq_lens_k=None,

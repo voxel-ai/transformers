@@ -259,7 +259,7 @@ class QuestionAnsweringPipeline(ChunkPipeline):
         self,
         model: "PreTrainedModel",
         tokenizer: PreTrainedTokenizer,
-        modelcard: ModelCard | None = None,
+        modelcard: ModelCard  = None,
         task: str = "",
         **kwargs,
     ):
@@ -617,7 +617,7 @@ class QuestionAnsweringPipeline(ChunkPipeline):
             return answers[0]
         return answers
 
-    def get_answer(self, answers: list[dict], target: str) -> dict | None:
+    def get_answer(self, answers: list[dict], target: str) -> dict :
         for answer in answers:
             if answer["answer"].lower() == target.lower():
                 return answer

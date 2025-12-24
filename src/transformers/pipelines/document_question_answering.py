@@ -60,7 +60,7 @@ def normalize_box(box, width, height):
     ]
 
 
-def apply_tesseract(image: "Image.Image", lang: str | None, tesseract_config: str | None):
+def apply_tesseract(image: "Image.Image", lang: str , tesseract_config: str ):
     """Applies Tesseract OCR on a document image, and returns recognized words + normalized bounding boxes."""
     # apply OCR
     data = pytesseract.image_to_data(image, lang=lang, output_type="dict", config=tesseract_config)
@@ -170,8 +170,8 @@ class DocumentQuestionAnsweringPipeline(ChunkPipeline):
         padding=None,
         doc_stride=None,
         max_question_len=None,
-        lang: str | None = None,
-        tesseract_config: str | None = None,
+        lang: str  = None,
+        tesseract_config: str  = None,
         max_answer_len=None,
         max_seq_len=None,
         top_k=None,
@@ -220,7 +220,7 @@ class DocumentQuestionAnsweringPipeline(ChunkPipeline):
         self,
         image: Union["Image.Image", str],
         question: str,
-        word_boxes: tuple[str, list[float]] | None = None,
+        word_boxes: tuple[str, list[float]]  = None,
         **kwargs: Any,
     ) -> list[dict[str, Any]]: ...
 
@@ -233,8 +233,8 @@ class DocumentQuestionAnsweringPipeline(ChunkPipeline):
     def __call__(
         self,
         image: Union["Image.Image", str, list[dict[str, Any]]],
-        question: str | None = None,
-        word_boxes: tuple[str, list[float]] | None = None,
+        question: str  = None,
+        word_boxes: tuple[str, list[float]]  = None,
         **kwargs: Any,
     ) -> dict[str, Any] | list[dict[str, Any]]:
         """
@@ -315,7 +315,7 @@ class DocumentQuestionAnsweringPipeline(ChunkPipeline):
         padding="do_not_pad",
         doc_stride=None,
         max_seq_len=None,
-        word_boxes: tuple[str, list[float]] | None = None,
+        word_boxes: tuple[str, list[float]]  = None,
         lang=None,
         tesseract_config="",
         timeout=None,

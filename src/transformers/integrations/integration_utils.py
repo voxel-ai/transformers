@@ -1531,13 +1531,13 @@ class NeptuneCallback(TrainerCallback):
     def __init__(
         self,
         *,
-        api_token: str | None = None,
-        project: str | None = None,
-        name: str | None = None,
+        api_token: str  = None,
+        project: str  = None,
+        name: str  = None,
         base_namespace: str = "finetuning",
         run=None,
         log_parameters: bool = True,
-        log_checkpoints: str | None = None,
+        log_checkpoints: str  = None,
         **neptune_run_kwargs,
     ):
         warnings.warn(
@@ -1569,7 +1569,7 @@ class NeptuneCallback(TrainerCallback):
         self._base_namespace_path = base_namespace
         self._log_parameters = log_parameters
         self._log_checkpoints = log_checkpoints
-        self._initial_run: Run | None = run
+        self._initial_run: Run  = run
 
         self._run = None
         self._is_monitoring_run = False
@@ -1757,7 +1757,7 @@ class NeptuneCallback(TrainerCallback):
 
         raise Exception("The trainer doesn't have a NeptuneCallback configured.")
 
-    def on_log(self, args, state, control, logs: dict[str, float] | None = None, **kwargs):
+    def on_log(self, args, state, control, logs: dict[str, float]  = None, **kwargs):
         if not state.is_world_process_zero:
             return
 
@@ -2136,8 +2136,8 @@ class DVCLiveCallback(TrainerCallback):
 
     def __init__(
         self,
-        live: Any | None = None,
-        log_model: Literal["all"] | bool | None = None,
+        live: Any  = None,
+        log_model: Literal["all"] | bool  = None,
         **kwargs,
     ):
         if not is_dvclive_available():

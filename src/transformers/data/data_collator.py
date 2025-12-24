@@ -35,7 +35,7 @@ DataCollator = Callable[[list[InputDataClass]], dict[str, Any]]
 
 
 class DataCollatorMixin:
-    def __call__(self, features, return_tensors: str | None = None):
+    def __call__(self, features, return_tensors: str  = None):
         if return_tensors is None:
             return_tensors = self.return_tensors
         if return_tensors == "pt":
@@ -217,8 +217,8 @@ class DataCollatorWithPadding:
 
     tokenizer: PreTrainedTokenizerBase
     padding: bool | str | PaddingStrategy = True
-    max_length: int | None = None
-    pad_to_multiple_of: int | None = None
+    max_length: int  = None
+    pad_to_multiple_of: int  = None
     return_tensors: str = "pt"
 
     def __call__(self, features: list[dict[str, Any]]) -> dict[str, Any]:
@@ -271,8 +271,8 @@ class DataCollatorForTokenClassification(DataCollatorMixin):
 
     tokenizer: PreTrainedTokenizerBase
     padding: bool | str | PaddingStrategy = True
-    max_length: int | None = None
-    pad_to_multiple_of: int | None = None
+    max_length: int  = None
+    pad_to_multiple_of: int  = None
     label_pad_token_id: int = -100
     return_tensors: str = "pt"
 
@@ -347,7 +347,7 @@ class DataCollatorForTokenClassification(DataCollatorMixin):
         return batch
 
 
-def _torch_collate_batch(examples, tokenizer, pad_to_multiple_of: int | None = None):
+def _torch_collate_batch(examples, tokenizer, pad_to_multiple_of: int  = None):
     """Collate `examples` into a batch, using the information in `tokenizer` for padding if necessary."""
     import torch
 
@@ -384,7 +384,7 @@ def _torch_collate_batch(examples, tokenizer, pad_to_multiple_of: int | None = N
     return result
 
 
-def _numpy_collate_batch(examples, tokenizer, pad_to_multiple_of: int | None = None):
+def _numpy_collate_batch(examples, tokenizer, pad_to_multiple_of: int  = None):
     """Collate `examples` into a batch, using the information in `tokenizer` for padding if necessary."""
     # Tensorize if necessary.
     if isinstance(examples[0], (list, tuple)):
@@ -448,8 +448,8 @@ class DataCollatorForMultipleChoice(DataCollatorMixin):
 
     tokenizer: PreTrainedTokenizerBase
     padding: bool | str | PaddingStrategy = True
-    max_length: int | None = None
-    pad_to_multiple_of: int | None = None
+    max_length: int  = None
+    pad_to_multiple_of: int  = None
     return_tensors: str = "pt"
 
     def torch_call(self, examples: list[dict[str, Any]]):  # Refactored implementation from the docs.
@@ -519,10 +519,10 @@ class DataCollatorForSeq2Seq:
     """
 
     tokenizer: PreTrainedTokenizerBase
-    model: Any | None = None
+    model: Any  = None
     padding: bool | str | PaddingStrategy = True
-    max_length: int | None = None
-    pad_to_multiple_of: int | None = None
+    max_length: int  = None
+    pad_to_multiple_of: int  = None
     label_pad_token_id: int = -100
     return_tensors: str = "pt"
 
@@ -682,12 +682,12 @@ class DataCollatorForLanguageModeling(DataCollatorMixin):
     tokenizer: PreTrainedTokenizerBase
     mlm: bool = True
     whole_word_mask: bool = False
-    mlm_probability: float | None = 0.15
+    mlm_probability: float  = 0.15
     mask_replace_prob: float = 0.8
     random_replace_prob: float = 0.1
-    pad_to_multiple_of: int | None = None
+    pad_to_multiple_of: int  = None
     return_tensors: str = "pt"
-    seed: int | None = None
+    seed: int  = None
 
     def __post_init__(self):
         if self.mlm:
@@ -794,7 +794,7 @@ class DataCollatorForLanguageModeling(DataCollatorMixin):
         return batch
 
     def torch_mask_tokens(
-        self, inputs: Any, special_tokens_mask: Any | None = None, offset_mapping: Any | None = None
+        self, inputs: Any, special_tokens_mask: Any  = None, offset_mapping: Any  = None
     ) -> tuple[Any, Any]:
         """
         Prepare masked tokens inputs/labels for masked language modeling.
@@ -890,8 +890,8 @@ class DataCollatorForLanguageModeling(DataCollatorMixin):
     def numpy_mask_tokens(
         self,
         inputs: Any,
-        special_tokens_mask: Any | None = None,
-        offset_mapping: Any | None = None,
+        special_tokens_mask: Any  = None,
+        offset_mapping: Any  = None,
     ) -> tuple[Any, Any]:
         """
         Prepare masked tokens inputs/labels for masked language modeling.

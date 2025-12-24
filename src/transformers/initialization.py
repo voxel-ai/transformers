@@ -39,7 +39,7 @@ TORCH_INIT_FUNCTIONS = {
 
 
 def uniform_(
-    tensor: torch.Tensor, a: float = 0.0, b: float = 1.0, generator: torch.Generator | None = None
+    tensor: torch.Tensor, a: float = 0.0, b: float = 1.0, generator: torch.Generator  = None
 ) -> torch.Tensor:
     if not getattr(tensor, "_is_hf_initialized", False):
         return TORCH_INIT_FUNCTIONS["uniform_"](tensor, a=a, b=b, generator=generator)
@@ -47,7 +47,7 @@ def uniform_(
 
 
 def normal_(
-    tensor: torch.Tensor, mean: float = 0.0, std: float = 1.0, generator: torch.Generator | None = None
+    tensor: torch.Tensor, mean: float = 0.0, std: float = 1.0, generator: torch.Generator  = None
 ) -> torch.Tensor:
     if not getattr(tensor, "_is_hf_initialized", False):
         return TORCH_INIT_FUNCTIONS["normal_"](tensor, mean=mean, std=std, generator=generator)
@@ -84,13 +84,13 @@ def dirac_(tensor: torch.Tensor, groups: int = 1) -> torch.Tensor:
     return tensor
 
 
-def xavier_uniform_(tensor: torch.Tensor, gain: float = 1.0, generator: torch.Generator | None = None) -> torch.Tensor:
+def xavier_uniform_(tensor: torch.Tensor, gain: float = 1.0, generator: torch.Generator  = None) -> torch.Tensor:
     if not getattr(tensor, "_is_hf_initialized", False):
         return TORCH_INIT_FUNCTIONS["xavier_uniform_"](tensor, gain=gain, generator=generator)
     return tensor
 
 
-def xavier_normal_(tensor: torch.Tensor, gain: float = 1.0, generator: torch.Generator | None = None) -> torch.Tensor:
+def xavier_normal_(tensor: torch.Tensor, gain: float = 1.0, generator: torch.Generator  = None) -> torch.Tensor:
     if not getattr(tensor, "_is_hf_initialized", False):
         return TORCH_INIT_FUNCTIONS["xavier_normal_"](tensor, gain=gain, generator=generator)
     return tensor
@@ -101,7 +101,7 @@ def kaiming_uniform_(
     a: float = 0,
     mode: str = "fan_in",
     nonlinearity: str = "leaky_relu",
-    generator: torch.Generator | None = None,
+    generator: torch.Generator  = None,
 ) -> torch.Tensor:
     if not getattr(tensor, "_is_hf_initialized", False):
         return TORCH_INIT_FUNCTIONS["kaiming_uniform_"](
@@ -115,7 +115,7 @@ def kaiming_normal_(
     a: float = 0,
     mode: str = "fan_in",
     nonlinearity: str = "leaky_relu",
-    generator: torch.Generator | None = None,
+    generator: torch.Generator  = None,
 ) -> torch.Tensor:
     if not getattr(tensor, "_is_hf_initialized", False):
         return TORCH_INIT_FUNCTIONS["kaiming_normal_"](
@@ -130,7 +130,7 @@ def trunc_normal_(
     std: float = 1.0,
     a: float = -2.0,
     b: float = 2.0,
-    generator: torch.Generator | None = None,
+    generator: torch.Generator  = None,
 ) -> torch.Tensor:
     if not getattr(tensor, "_is_hf_initialized", False):
         return TORCH_INIT_FUNCTIONS["trunc_normal_"](tensor, mean=mean, std=std, a=a, b=b, generator=generator)
@@ -140,7 +140,7 @@ def trunc_normal_(
 def orthogonal_(
     tensor: torch.Tensor,
     gain: float = 1,
-    generator: torch.Generator | None = None,
+    generator: torch.Generator  = None,
 ) -> torch.Tensor:
     if not getattr(tensor, "_is_hf_initialized", False):
         return TORCH_INIT_FUNCTIONS["orthogonal_"](tensor, gain=gain, generator=generator)
@@ -148,7 +148,7 @@ def orthogonal_(
 
 
 def sparse_(
-    tensor: torch.Tensor, sparsity: float, std: float = 0.01, generator: torch.Generator | None = None
+    tensor: torch.Tensor, sparsity: float, std: float = 0.01, generator: torch.Generator  = None
 ) -> torch.Tensor:
     if not getattr(tensor, "_is_hf_initialized", False):
         return TORCH_INIT_FUNCTIONS["sparse_"](tensor, sparsity=sparsity, std=std, generator=generator)

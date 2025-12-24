@@ -77,7 +77,7 @@ class FpQuantDeserialize(ConversionOps):
         self,
         input_dict: torch.Tensor,
         model: Optional[torch.nn.Module] = None,
-        full_layer_name: str | None = None,
+        full_layer_name: str  = None,
         missing_keys: Optional[list[str]] = None,
         **kwargs,
     ) -> dict[str, torch.Tensor]:

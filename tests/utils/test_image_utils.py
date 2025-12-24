@@ -41,7 +41,7 @@ if is_vision_available():
     from transformers.image_utils import get_image_size, infer_channel_dimension_format, load_image
 
 
-def get_image_from_hub_dataset(dataset_id: str, filename: str, revision: str | None = None) -> "PIL.Image.Image":
+def get_image_from_hub_dataset(dataset_id: str, filename: str, revision: str  = None) -> "PIL.Image.Image":
     path = hf_hub_download(dataset_id, filename, repo_type="dataset", revision=revision)
     return PIL.Image.open(path)
 

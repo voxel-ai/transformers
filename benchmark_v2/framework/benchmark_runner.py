@@ -137,10 +137,10 @@ class BenchmarkRunner:
     def __init__(
         self,
         logger: logging.Logger,
-        output_dir: str | None = None,
-        branch_name: str | None = None,
-        commit_id: str | None = None,
-        commit_message: str | None = None,
+        output_dir: str  = None,
+        branch_name: str  = None,
+        commit_id: str  = None,
+        commit_message: str  = None,
     ) -> None:
         # Those stay constant for the whole run
         self.logger = logger
@@ -155,7 +155,7 @@ class BenchmarkRunner:
         # Attributes that are reset for each model
         self._setup_for = ""
         # Attributes that are reset for each run
-        self.model: GenerationMixin | None = None
+        self.model: GenerationMixin  = None
 
     def cleanup(self) -> None:
         del self.model
@@ -207,7 +207,7 @@ class BenchmarkRunner:
         if config.kernelize and kernelize is not None and Mode is not None:
             self.model = kernelize(self.model, mode=Mode.INFERENCE)
 
-    def run_benchmark(self, config: BenchmarkConfig, num_tokens_to_profile: int = 0) -> BenchmarkResult | None:
+    def run_benchmark(self, config: BenchmarkConfig, num_tokens_to_profile: int = 0) -> BenchmarkResult :
         """Run a single benchmark with the given model ID and config."""
         with torch.no_grad():
             self.logger.info(f"Running benchmark scenario: {config.name}")
@@ -244,7 +244,7 @@ class BenchmarkRunner:
 
     def time_generate(
         self, config: BenchmarkConfig, warmup: bool
-    ) -> tuple[float, list[float], str, GPURawMetrics | None]:
+    ) -> tuple[float, list[float], str, GPURawMetrics ]:
         # Prepare gpu monitoring if needed
         if config.gpu_monitoring and not warmup:
             gpu_monitor = GPUMonitor(logger=self.logger)

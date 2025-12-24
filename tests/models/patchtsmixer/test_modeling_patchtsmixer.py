@@ -86,17 +86,17 @@ class PatchTSMixerModelTester:
         masked_loss: bool = False,
         mask_mode: str = "mask_before_encoder",
         channel_consistent_masking: bool = True,
-        scaling: str | bool | None = "std",
+        scaling: str | bool  = "std",
         # Head related
         head_dropout: float = 0.2,
         # forecast related
         prediction_length: int = 16,
-        out_channels: int | None = None,
+        out_channels: int  = None,
         # Classification/regression related
         # num_labels: int = 3,
         num_targets: int = 3,
-        output_range: list | None = None,
-        head_aggregation: str | None = None,
+        output_range: list  = None,
+        head_aggregation: str  = None,
         # Trainer related
         batch_size=13,
         is_training=True,

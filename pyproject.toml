@@ -27,7 +27,7 @@ line-length = 119
 # UP031: Use format specifiers instead of percent format
 # UP004: Class `XXX` inherits from `object`
 # UP028: Checks for for loops that can be replaced with yield from expressions
-# UP045: Use `X | None` for type annotations
+# UP045: Use `X ` for type annotations
 # UP007: Use `X | Y` for type annotations
 ignore = ["C901", "E501", "E741", "F402", "F823", "SIM1", "SIM300", "SIM212", "SIM905", "UP009", "UP015", "UP031", "UP028", "UP004", "UP045", "UP007"]
 # RUF013: Checks for the use of implicit Optional

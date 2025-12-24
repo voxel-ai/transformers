@@ -30,8 +30,8 @@ if is_torch_available():
 @dataclass
 class ModelOutputTest(ModelOutput):
     a: float
-    b: float | None = None
-    c: float | None = None
+    b: float  = None
+    c: float  = None
 
 
 class ModelOutputTester(unittest.TestCase):
@@ -181,8 +181,8 @@ class ModelOutputTestNoDataclass(ModelOutput):
     """Invalid test subclass of ModelOutput where @dataclass decorator is not used"""
 
     a: float
-    b: float | None = None
-    c: float | None = None
+    b: float  = None
+    c: float  = None
 
 
 class ModelOutputSubclassTester(unittest.TestCase):

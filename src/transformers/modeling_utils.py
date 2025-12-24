@@ -240,7 +240,7 @@ def set_zero3_state():
 
 
 @contextmanager
-def local_torch_dtype(dtype: torch.dtype, model_class_name: str | None = None):
+def local_torch_dtype(dtype: torch.dtype, model_class_name: str  = None):
     """
     Locally change the torch default dtype to `dtype`, and restore the old one upon exiting the context.
     If `model_class_name` is provided, it's used to provide a more helpful error message if `dtype` is not valid.
@@ -1397,7 +1397,7 @@ class PreTrainedModel(nn.Module, EmbeddingAccessMixin, ModuleUtilsMixin, PushToH
         return self._pp_plan
 
     @tp_plan.setter
-    def tp_plan(self, plan: dict[str, str] | None):
+    def tp_plan(self, plan: dict[str, str] ):
         if plan is None:
             self._tp_plan = {}
             return

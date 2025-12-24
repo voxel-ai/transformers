@@ -37,11 +37,11 @@ class Block:  # TODO: rename to ShareableBlock and update the docs
     sequence. Once a block is complete, it is given a hash, which takes into account the tokens ids of the block, the
     layer (group_id) it belong to and its parent's hash (if there is a parent)."""
 
-    def __init__(self, id_: int, parent_id: int | None, group_id: int) -> None:
+    def __init__(self, id_: int, parent_id: int , group_id: int) -> None:
         self.id: int = id_
-        self.parent_id: int | None = parent_id
+        self.parent_id: int  = parent_id
         self.group_id: int = group_id
-        self.hash: int | None = None
+        self.hash: int  = None
         self.ref_count: int = 1
 
     def __repr__(self) -> str:
@@ -105,8 +105,8 @@ class BlockManager:
         return True
 
     def get_free_blocks(
-        self, n_blocks: int, last_block_id: int | None, shareable: bool, group_id: int
-    ) -> list[int] | None:
+        self, n_blocks: int, last_block_id: int , shareable: bool, group_id: int
+    ) -> list[int] :
         """Returns a list of (n_blocks) free block and mark them as no longuer free in the internal data structures.
         If the (shareable) flag is set to True, a Block object is created to keep track of the block, with the
         (last_block_id) to indicate the last block id in the sequence, also named the parent block. If the manager
@@ -202,7 +202,7 @@ class BlockManager:
             # Update loop variables
             parent_hash = block.hash
 
-    def compute_hash(self, parent_hash: int | None, tokens: list[int], group_id: int) -> int:
+    def compute_hash(self, parent_hash: int , tokens: list[int], group_id: int) -> int:
         """Computes the hash of a block identified by the (tokens) it contains, its (parent_hash) and the layer
         (group_id) it belong to. If the block has no parent, the parent hash is None."""
         return hash((parent_hash, tuple(tokens), group_id))
@@ -217,7 +217,7 @@ class CacheAllocator(ABC):
     uses_block_sharing: bool  # flag to determine if the blocks are shareable
 
     @abstractmethod
-    def allocate_blocks(self, n_blocks: int, request_id: str, block_manager: BlockManager) -> int | None:
+    def allocate_blocks(self, n_blocks: int, request_id: str, block_manager: BlockManager) -> int :
         """Allocates (n_blocks) for a given (request_id) using the (block_manager). Returns the num of blocks allocated
         if successful and None otherwise."""
 
@@ -258,7 +258,7 @@ class FullAttentionCacheAllocator(CacheAllocator):
         self.block_size = block_size
         self.block_table = {}
 
-    def allocate_blocks(self, n_blocks: int, request_id: str, block_manager: BlockManager) -> int | None:
+    def allocate_blocks(self, n_blocks: int, request_id: str, block_manager: BlockManager) -> int :
         """Allocate (n_blocks) for a given (request_id) using the (block_manager). Returns the number of blocks
         allocated if successful and None otherwise. For group of full attention layers, we always allocate the number of
         requested blocks."""
@@ -329,7 +329,7 @@ class SlidingAttentionCacheAllocator(CacheAllocator):
         self._max_blocks_per_request = ceil(self.sliding_window / self.block_size)
         self.block_table = {}
 
-    def allocate_blocks(self, n_blocks: int, request_id: str, block_manager: BlockManager) -> int | None:
+    def allocate_blocks(self, n_blocks: int, request_id: str, block_manager: BlockManager) -> int :
         """Allocate (n_blocks) for a given (request_id) using the (block_manager). Returns the number of blocks
         allocated otherwise. For group of sliding window attention layers, we only allocate up to the point where we can
         fit an entire sliding window in the cache tensor."""

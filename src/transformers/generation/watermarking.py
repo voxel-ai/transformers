@@ -60,13 +60,13 @@ class WatermarkDetectorOutput:
             Array containing confidence scores of a text being machine-generated for each element in the batch.
     """
 
-    num_tokens_scored: np.ndarray | None = None
-    num_green_tokens: np.ndarray | None = None
-    green_fraction: np.ndarray | None = None
-    z_score: np.ndarray | None = None
-    p_value: np.ndarray | None = None
-    prediction: np.ndarray | None = None
-    confidence: np.ndarray | None = None
+    num_tokens_scored: np.ndarray  = None
+    num_green_tokens: np.ndarray  = None
+    green_fraction: np.ndarray  = None
+    z_score: np.ndarray  = None
+    p_value: np.ndarray  = None
+    prediction: np.ndarray  = None
+    confidence: np.ndarray  = None
 
 
 class WatermarkDetector:
@@ -256,7 +256,7 @@ class BayesianDetectorConfig(PreTrainedConfig):
             Prior probability P(w) that a text is watermarked.
     """
 
-    def __init__(self, watermarking_depth: int | None = None, base_rate: float = 0.5, **kwargs):
+    def __init__(self, watermarking_depth: int  = None, base_rate: float = 0.5, **kwargs):
         self.watermarking_depth = watermarking_depth
         self.base_rate = base_rate
         # These can be set later to store information about this detector.
@@ -282,8 +282,8 @@ class BayesianWatermarkDetectorModelOutput(ModelOutput):
             Multiple choice classification loss.
     """
 
-    loss: torch.FloatTensor | None = None
-    posterior_probabilities: torch.FloatTensor | None = None
+    loss: torch.FloatTensor  = None
+    posterior_probabilities: torch.FloatTensor  = None
 
 
 class BayesianDetectorWatermarkedLikelihood(nn.Module):
@@ -439,7 +439,7 @@ class BayesianDetectorModel(PreTrainedModel):
         self,
         g_values: torch.Tensor,
         mask: torch.Tensor,
-        labels: torch.Tensor | None = None,
+        labels: torch.Tensor  = None,
         loss_batch_weight=1,
         return_dict=False,
     ) -> BayesianWatermarkDetectorModelOutput:

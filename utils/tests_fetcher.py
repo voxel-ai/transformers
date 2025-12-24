@@ -550,7 +550,7 @@ _re_single_line_direct_imports = re.compile(r"(?:^|\n)\s*from\s+transformers(\S*
 _re_multi_line_direct_imports = re.compile(r"(?:^|\n)\s*from\s+transformers(\S*)\s+import\s+\(([^\)]+)\)")
 
 
-def extract_imports(module_fname: str, cache: dict[str, list[str]] | None = None) -> list[str]:
+def extract_imports(module_fname: str, cache: dict[str, list[str]]  = None) -> list[str]:
     """
     Get the imports a given module makes.
 
@@ -632,7 +632,7 @@ def extract_imports(module_fname: str, cache: dict[str, list[str]] | None = None
     return result
 
 
-def get_module_dependencies(module_fname: str, cache: dict[str, list[str]] | None = None) -> list[str]:
+def get_module_dependencies(module_fname: str, cache: dict[str, list[str]]  = None) -> list[str]:
     """
     Refines the result of `extract_imports` to remove subfolders and get a proper list of module filenames: if a file
     as an import `from utils import Foo, Bar`, with `utils` being a subfolder containing many files, this will traverse
@@ -878,7 +878,7 @@ def create_reverse_dependency_map() -> dict[str, list[str]]:
 
 
 def create_module_to_test_map(
-    reverse_map: dict[str, list[str]] | None = None, filter_models: bool = False
+    reverse_map: dict[str, list[str]]  = None, filter_models: bool = False
 ) -> dict[str, list[str]]:
     """
     Extract the tests from the reverse_dependency_map and potentially filters the model tests.

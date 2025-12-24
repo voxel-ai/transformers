@@ -83,7 +83,7 @@ class TorchAoQuantize(ConversionOps):
         self,
         input_dict: dict[str, torch.Tensor],
         model: Optional[torch.nn.Module] = None,
-        full_layer_name: str | None = None,
+        full_layer_name: str  = None,
         missing_keys=None,
         **kwargs,
     ) -> dict[str, torch.Tensor]:
@@ -210,9 +210,9 @@ class TorchAoDeserialize(ConversionOps):
     def convert(
         self,
         input_dict: dict[str, torch.Tensor],
-        source_patterns: list[str] | None = None,
+        source_patterns: list[str]  = None,
         model: Optional[torch.nn.Module] = None,
-        full_layer_name: str | None = None,
+        full_layer_name: str  = None,
         missing_keys=None,
         **kwargs,
     ) -> dict[str, torch.Tensor]:

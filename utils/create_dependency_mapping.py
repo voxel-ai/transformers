@@ -55,7 +55,7 @@ ALL_FILE_TYPES = (
 )
 
 
-def is_model_import(module: str | None) -> bool:
+def is_model_import(module: str ) -> bool:
     """Check whether `module` is a model import or not."""
     # Happens for fully relative import, i.e. `from ... import initialization as init`
     if module is None:

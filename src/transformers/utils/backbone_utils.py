@@ -30,7 +30,7 @@ class BackboneType(enum.Enum):
 
 
 def verify_out_features_out_indices(
-    out_features: Iterable[str] | None, out_indices: Iterable[int] | None, stage_names: Iterable[str] | None
+    out_features: Iterable[str] , out_indices: Iterable[int] , stage_names: Iterable[str] 
 ):
     """
     Verify that out_indices and out_features are valid for the given stage_names.
@@ -75,8 +75,8 @@ def verify_out_features_out_indices(
 
 
 def _align_output_features_output_indices(
-    out_features: list[str] | None,
-    out_indices: list[int] | tuple[int, ...] | None,
+    out_features: list[str] ,
+    out_indices: list[int] | tuple[int, ...] ,
     stage_names: list[str],
 ):
     """
@@ -106,8 +106,8 @@ def _align_output_features_output_indices(
 
 
 def get_aligned_output_features_output_indices(
-    out_features: list[str] | None,
-    out_indices: list[int] | tuple[int] | None,
+    out_features: list[str] ,
+    out_indices: list[int] | tuple[int] ,
     stage_names: list[str],
 ) -> tuple[list[str], list[int]]:
     """
@@ -138,7 +138,7 @@ def get_aligned_output_features_output_indices(
 
 
 class BackboneMixin:
-    backbone_type: BackboneType | None = None
+    backbone_type: BackboneType  = None
 
     # Attribute to indicate if the backbone has attention and can return attention outputs.
     # Should be set to `False` for conv-based models to be able to run `forward_with_filtered_kwargs`
@@ -244,9 +244,9 @@ class BackboneMixin:
     def forward(
         self,
         pixel_values,
-        output_hidden_states: bool | None = None,
-        output_attentions: bool | None = None,
-        return_dict: bool | None = None,
+        output_hidden_states: bool  = None,
+        output_attentions: bool  = None,
+        return_dict: bool  = None,
     ):
         raise NotImplementedError("This method should be implemented by the derived class.")
 
@@ -362,9 +362,9 @@ def load_backbone(config):
 def verify_backbone_config_arguments(
     use_timm_backbone: bool,
     use_pretrained_backbone: bool,
-    backbone: str | None,
-    backbone_config: Union[dict, "PreTrainedConfig"] | None,
-    backbone_kwargs: dict | None,
+    backbone: str ,
+    backbone_config: Union[dict, "PreTrainedConfig"] ,
+    backbone_kwargs: dict ,
 ):
     """
     Verify that the config arguments to be passed to load_backbone are valid

@@ -72,7 +72,7 @@ def {0}(*args, **kwargs):
 """
 
 
-def find_backend(line: str) -> str | None:
+def find_backend(line: str) -> str :
     """
     Find one (or multiple) backend in a code line of the init.
 
@@ -155,7 +155,7 @@ def create_dummy_object(name: str, backend_name: str) -> str:
         return DUMMY_CLASS.format(name, backend_name)
 
 
-def create_dummy_files(backend_specific_objects: dict[str, list[str]] | None = None) -> dict[str, str]:
+def create_dummy_files(backend_specific_objects: dict[str, list[str]]  = None) -> dict[str, str]:
     """
     Create the content of the dummy files.
 

@@ -11,7 +11,7 @@ def _base_test_name(nodeid: str) -> str:
     return re.sub(r"\[.*\]$", "", name)
 
 
-def _class_name(nodeid: str) -> str | None:
+def _class_name(nodeid: str) -> str :
     parts = nodeid.split("::")
     # nodeid can be: file::Class::test or file::test
     if len(parts) >= 3:
@@ -23,7 +23,7 @@ def _file_path(nodeid: str) -> str:
     return nodeid.split("::")[0]
 
 
-def _modeling_key(file_path: str) -> str | None:
+def _modeling_key(file_path: str) -> str :
     # Extract "xxx" from test_modeling_xxx.py
     m = re.search(r"test_modeling_([A-Za-z0-9_]+)\.py$", file_path)
     if m:

@@ -13,7 +13,7 @@ EXCLUDED_EXTERNAL_FILES = {
 def convert_relative_import_to_absolute(
     import_node: cst.ImportFrom,
     file_path: str,
-    package_name: str | None = "transformers",
+    package_name: str  = "transformers",
 ) -> cst.ImportFrom:
     """
     Convert a relative libcst.ImportFrom node into an absolute one,
@@ -50,7 +50,7 @@ def convert_relative_import_to_absolute(
     base_parts = module_parts[:-rel_level]
 
     # Flatten the module being imported (if any)
-    def flatten_module(module: cst.BaseExpression | None) -> list[str]:
+    def flatten_module(module: cst.BaseExpression ) -> list[str]:
         if not module:
             return []
         if isinstance(module, cst.Name):
@@ -75,7 +75,7 @@ def convert_relative_import_to_absolute(
         full_parts = [file_parts[pkg_index - 1]] + full_parts
 
     # Build the dotted module path
-    dotted_module: cst.BaseExpression | None = None
+    dotted_module: cst.BaseExpression  = None
     for part in full_parts:
         name = cst.Name(part)
         dotted_module = name if dotted_module is None else cst.Attribute(value=dotted_module, attr=name)

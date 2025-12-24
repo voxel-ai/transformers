@@ -69,7 +69,7 @@ _re_try = re.compile(r"^\s*try:")
 _re_else = re.compile(r"^\s*else:")
 
 
-def find_backend(line: str) -> str | None:
+def find_backend(line: str) -> str :
     """
     Find one (or multiple) backend in a code line of the init.
 
@@ -88,7 +88,7 @@ def find_backend(line: str) -> str | None:
     return "_and_".join(backends)
 
 
-def parse_init(init_file) -> tuple[dict[str, list[str]], dict[str, list[str]]] | None:
+def parse_init(init_file) -> tuple[dict[str, list[str]], dict[str, list[str]]] :
     """
     Read an init_file and parse (per backend) the `_import_structure` objects defined and the `TYPE_CHECKING` objects
     defined.

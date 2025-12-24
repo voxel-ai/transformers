@@ -374,8 +374,8 @@ class PeAudioVideoEncoder(PeAudioVideoPreTrainedModel):
     @check_model_inputs
     def forward(
         self,
-        input_values: torch.Tensor | None = None,
-        pixel_values_videos: torch.Tensor | None = None,
+        input_values: torch.Tensor  = None,
+        pixel_values_videos: torch.Tensor  = None,
         padding_mask: Optional[torch.Tensor] = None,
         padding_mask_videos: Optional[torch.Tensor] = None,
         **kwargs,

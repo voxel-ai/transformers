@@ -31,9 +31,9 @@ class TestCodeExamples(unittest.TestCase):
     def analyze_directory(
         self,
         directory: Path,
-        identifier: str | None = None,
-        ignore_files: list[str] | None = None,
-        n_identifier: str | list[str] | None = None,
+        identifier: str  = None,
+        ignore_files: list[str]  = None,
+        n_identifier: str | list[str]  = None,
         only_modules: bool = True,
     ):
         """

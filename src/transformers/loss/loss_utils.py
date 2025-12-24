@@ -27,7 +27,7 @@ from .loss_rt_detr import RTDetrForObjectDetectionLoss
 def fixed_cross_entropy(
     source: torch.Tensor,
     target: torch.Tensor,
-    num_items_in_batch: torch.Tensor | None = None,
+    num_items_in_batch: torch.Tensor  = None,
     ignore_index: int = -100,
     **kwargs,
 ) -> torch.Tensor:
@@ -45,9 +45,9 @@ def ForCausalLMLoss(
     logits,
     labels,
     vocab_size: int,
-    num_items_in_batch: torch.Tensor | None = None,
+    num_items_in_batch: torch.Tensor  = None,
     ignore_index: int = -100,
-    shift_labels: torch.Tensor | None = None,
+    shift_labels: torch.Tensor  = None,
     **kwargs,
 ) -> torch.Tensor:
     # Upcast to float if we need to compute the loss to avoid potential precision issues
@@ -70,7 +70,7 @@ def ForMaskedLMLoss(
     logits: torch.Tensor,
     labels: torch.Tensor,
     vocab_size: int,
-    num_items_in_batch: torch.Tensor | None = None,
+    num_items_in_batch: torch.Tensor  = None,
     ignore_index: int = -100,
     **kwargs,
 ):

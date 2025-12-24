@@ -208,7 +208,7 @@ class MistralCommonBackend(PushToHubMixin):
         model_max_length: int = VERY_LARGE_INTEGER,
         padding_side: str = "left",
         truncation_side: str = "right",
-        model_input_names: list[str] | None = None,
+        model_input_names: list[str]  = None,
         clean_up_tokenization_spaces: bool = False,
         **kwargs,
     ):
@@ -276,7 +276,7 @@ class MistralCommonBackend(PushToHubMixin):
                 )
             self.model_input_names = model_input_names
 
-        self._cache_get_vocab: dict[str, int] | None = None
+        self._cache_get_vocab: dict[str, int]  = None
 
     @staticmethod
     def clean_up_tokenization(text: str) -> str:
@@ -428,12 +428,12 @@ class MistralCommonBackend(PushToHubMixin):
         text_pair: None = None,
         add_special_tokens: bool = True,
         padding: bool | str | PaddingStrategy = False,
-        truncation: bool | str | TruncationStrategy | None = None,
-        max_length: int | None = None,
+        truncation: bool | str | TruncationStrategy  = None,
+        max_length: int  = None,
         stride: int = 0,
-        pad_to_multiple_of: int | None = None,
-        padding_side: str | None = None,
-        return_tensors: str | TensorType | None = None,
+        pad_to_multiple_of: int  = None,
+        padding_side: str  = None,
+        return_tensors: str | TensorType  = None,
         verbose: bool = True,
         **kwargs,
     ) -> list[int]:
@@ -482,7 +482,7 @@ class MistralCommonBackend(PushToHubMixin):
         self,
         token_ids: Union[int, list[int], list[list[int]], np.ndarray, "torch.Tensor"],
         skip_special_tokens: bool = False,
-        clean_up_tokenization_spaces: bool | None = None,
+        clean_up_tokenization_spaces: bool  = None,
         **kwargs,
     ) -> Union[str, list[str]]:
         """
@@ -528,7 +528,7 @@ class MistralCommonBackend(PushToHubMixin):
         self,
         sequences: Union[list[int], list[list[int]], np.ndarray, "torch.Tensor"],
         skip_special_tokens: bool = False,
-        clean_up_tokenization_spaces: bool | None = None,
+        clean_up_tokenization_spaces: bool  = None,
         **kwargs,
     ) -> list[str]:
         """
@@ -565,7 +565,7 @@ class MistralCommonBackend(PushToHubMixin):
         self,
         token_ids: Union[int, list[int], list[list[int]], np.ndarray, "torch.Tensor"],
         skip_special_tokens: bool = False,
-        clean_up_tokenization_spaces: bool | None = None,
+        clean_up_tokenization_spaces: bool  = None,
     ) -> str:
         clean_up_tokenization_spaces = clean_up_tokenization_spaces or self.cleanup_tokenization_spaces
 
@@ -593,7 +593,7 @@ class MistralCommonBackend(PushToHubMixin):
         self,
         sequences: Union[list[int], list[list[int]], np.ndarray, "torch.Tensor"],
         skip_special_tokens: bool = False,
-        clean_up_tokenization_spaces: bool | None = None,
+        clean_up_tokenization_spaces: bool  = None,
     ) -> list[str]:
         return [
             self._decode(
@@ -735,12 +735,12 @@ class MistralCommonBackend(PushToHubMixin):
         add_special_tokens: bool = True,
         padding_strategy: PaddingStrategy = PaddingStrategy.DO_NOT_PAD,
         truncation_strategy: TruncationStrategy = TruncationStrategy.DO_NOT_TRUNCATE,
-        max_length: int | None = None,
+        max_length: int  = None,
         stride: int = 0,
-        pad_to_multiple_of: int | None = None,
-        padding_side: str | None = None,
-        return_tensors: str | TensorType | None = None,
-        return_attention_mask: bool | None = None,
+        pad_to_multiple_of: int  = None,
+        padding_side: str  = None,
+        return_tensors: str | TensorType  = None,
+        return_attention_mask: bool  = None,
         return_overflowing_tokens: bool = False,
         return_special_tokens_mask: bool = False,
         return_length: bool = False,
@@ -780,12 +780,12 @@ class MistralCommonBackend(PushToHubMixin):
         add_special_tokens: bool = True,
         padding_strategy: PaddingStrategy = PaddingStrategy.DO_NOT_PAD,
         truncation_strategy: TruncationStrategy = TruncationStrategy.DO_NOT_TRUNCATE,
-        max_length: int | None = None,
+        max_length: int  = None,
         stride: int = 0,
-        pad_to_multiple_of: int | None = None,
-        padding_side: str | None = None,
-        return_tensors: str | TensorType | None = None,
-        return_attention_mask: bool | None = None,
+        pad_to_multiple_of: int  = None,
+        padding_side: str  = None,
+        return_tensors: str | TensorType  = None,
+        return_attention_mask: bool  = None,
         return_overflowing_tokens: bool = False,
         return_special_tokens_mask: bool = False,
         return_length: bool = False,
@@ -866,12 +866,12 @@ class MistralCommonBackend(PushToHubMixin):
         add_special_tokens: bool = True,
         padding_strategy: PaddingStrategy = PaddingStrategy.DO_NOT_PAD,
         truncation_strategy: TruncationStrategy = TruncationStrategy.DO_NOT_TRUNCATE,
-        max_length: int | None = None,
+        max_length: int  = None,
         stride: int = 0,
-        pad_to_multiple_of: int | None = None,
-        padding_side: str | None = None,
-        return_tensors: str | None = None,
-        return_attention_mask: bool | None = None,
+        pad_to_multiple_of: int  = None,
+        padding_side: str  = None,
+        return_tensors: str  = None,
+        return_attention_mask: bool  = None,
         return_overflowing_tokens: bool = False,
         return_special_tokens_mask: bool = False,
         return_length: bool = False,
@@ -931,13 +931,13 @@ class MistralCommonBackend(PushToHubMixin):
         pair_ids: None = None,
         add_special_tokens: bool = True,
         padding: bool | str | PaddingStrategy = False,
-        truncation: bool | str | TruncationStrategy | None = None,
-        max_length: int | None = None,
+        truncation: bool | str | TruncationStrategy  = None,
+        max_length: int  = None,
         stride: int = 0,
-        pad_to_multiple_of: int | None = None,
-        padding_side: str | None = None,
-        return_tensors: str | TensorType | None = None,
-        return_attention_mask: bool | None = None,
+        pad_to_multiple_of: int  = None,
+        padding_side: str  = None,
+        return_tensors: str | TensorType  = None,
+        return_attention_mask: bool  = None,
         return_overflowing_tokens: bool = False,
         return_special_tokens_mask: bool = False,
         return_length: bool = False,
@@ -1026,9 +1026,9 @@ class MistralCommonBackend(PushToHubMixin):
     def _get_padding_truncation_strategies(
         self,
         padding: str | PaddingStrategy | bool = False,
-        truncation: str | TruncationStrategy | bool | None = None,
-        max_length: int | None = None,
-        pad_to_multiple_of: int | None = None,
+        truncation: str | TruncationStrategy | bool  = None,
+        max_length: int  = None,
+        pad_to_multiple_of: int  = None,
         verbose: bool = True,
         **kwargs,
     ):
@@ -1139,11 +1139,11 @@ class MistralCommonBackend(PushToHubMixin):
     def _pad(
         self,
         encoded_inputs: dict[str, EncodedInput] | BatchEncoding,
-        max_length: int | None = None,
+        max_length: int  = None,
         padding_strategy: PaddingStrategy = PaddingStrategy.DO_NOT_PAD,
-        pad_to_multiple_of: int | None = None,
-        padding_side: str | None = None,
-        return_attention_mask: bool | None = None,
+        pad_to_multiple_of: int  = None,
+        padding_side: str  = None,
+        return_attention_mask: bool  = None,
     ) -> dict:
         """
         Pad encoded inputs (on left/right and up to predefined length or max length in the batch)
@@ -1218,11 +1218,11 @@ class MistralCommonBackend(PushToHubMixin):
         | dict[str, list[EncodedInput]]
         | list[dict[str, EncodedInput]],
         padding: bool | str | PaddingStrategy = True,
-        max_length: int | None = None,
-        pad_to_multiple_of: int | None = None,
-        padding_side: str | None = None,
-        return_attention_mask: bool | None = None,
-        return_tensors: str | TensorType | None = None,
+        max_length: int  = None,
+        pad_to_multiple_of: int  = None,
+        padding_side: str  = None,
+        return_attention_mask: bool  = None,
+        return_tensors: str | TensorType  = None,
         verbose: bool = True,
     ) -> BatchEncoding:
         """
@@ -1450,14 +1450,14 @@ class MistralCommonBackend(PushToHubMixin):
     def apply_chat_template(
         self,
         conversation: list[dict[str, str]] | list[list[dict[str, str]]],
-        tools: list[dict | Callable] | None = None,
+        tools: list[dict | Callable]  = None,
         add_generation_prompt: bool = False,
         continue_final_message: bool = False,
         tokenize: bool = True,
         padding: bool | str | PaddingStrategy = False,
         truncation: bool = False,
-        max_length: int | None = None,
-        return_tensors: str | TensorType | None = None,
+        max_length: int  = None,
+        return_tensors: str | TensorType  = None,
         return_dict: bool = True,
         **kwargs,
     ) -> str | list[int] | list[str] | list[list[int]] | BatchEncoding:
@@ -1545,7 +1545,7 @@ class MistralCommonBackend(PushToHubMixin):
             """Adapt message to `mistral-common` format and leave validation to `mistral-common`."""
             if not isinstance(message, dict):
                 return message
-            maybe_list_content: str | list[dict[str, str | dict[str, Any]]] | None = message.get("content")
+            maybe_list_content: str | list[dict[str, str | dict[str, Any]]]  = message.get("content")
             if not maybe_list_content or isinstance(maybe_list_content, str):
                 return message
 
@@ -1556,9 +1556,9 @@ class MistralCommonBackend(PushToHubMixin):
                 if not content_type:
                     continue
                 elif content_type == "image":
-                    maybe_url: str | None = content.get("url")
-                    maybe_path: str | None = content.get("path")
-                    maybe_base64: str | None = content.get("base64")
+                    maybe_url: str  = content.get("url")
+                    maybe_path: str  = content.get("path")
+                    maybe_base64: str  = content.get("base64")
                     if maybe_url:
                         image_content = maybe_url
                     elif maybe_path:
@@ -1573,9 +1573,9 @@ class MistralCommonBackend(PushToHubMixin):
                         raise ValueError("Image content must be specified.")
                     normalized_content.append({"type": "image_url", "image_url": {"url": image_content}})
                 elif content_type == "audio":
-                    maybe_url: str | None = content.get("url")
-                    maybe_path: str | None = content.get("path")
-                    maybe_base64: str | None = content.get("base64")
+                    maybe_url: str  = content.get("url")
+                    maybe_path: str  = content.get("path")
+                    maybe_base64: str  = content.get("base64")
                     if maybe_url or maybe_path:
                         audio_data = load_audio_as(maybe_url or maybe_path, return_format="dict", force_mono=True)
                         normalized_content.append({"type": "input_audio", "input_audio": audio_data})
@@ -1662,19 +1662,19 @@ class MistralCommonBackend(PushToHubMixin):
     @add_end_docstrings(ENCODE_KWARGS_DOCSTRING, ENCODE_PLUS_ADDITIONAL_KWARGS_DOCSTRING)
     def __call__(
         self,
-        text: TextInput | EncodedInput | list[TextInput] | list[EncodedInput] | None = None,
+        text: TextInput | EncodedInput | list[TextInput] | list[EncodedInput]  = None,
         text_pair: None = None,
         text_target: None = None,
         text_pair_target: None = None,
         add_special_tokens: bool = True,
         padding: bool | str | PaddingStrategy = False,
-        truncation: bool | str | TruncationStrategy | None = None,
-        max_length: int | None = None,
+        truncation: bool | str | TruncationStrategy  = None,
+        max_length: int  = None,
         stride: int = 0,
-        pad_to_multiple_of: int | None = None,
-        padding_side: str | None = None,
-        return_tensors: str | TensorType | None = None,
-        return_attention_mask: bool | None = None,
+        pad_to_multiple_of: int  = None,
+        padding_side: str  = None,
+        return_tensors: str | TensorType  = None,
+        return_attention_mask: bool  = None,
         return_overflowing_tokens: bool = False,
         return_special_tokens_mask: bool = False,
         return_length: bool = False,
@@ -1782,15 +1782,15 @@ class MistralCommonBackend(PushToHubMixin):
         pretrained_model_name_or_path: str | os.PathLike,
         *init_inputs,
         mode: Union[str, ValidationMode] = ValidationMode.test,
-        cache_dir: str | os.PathLike | None = None,
+        cache_dir: str | os.PathLike  = None,
         force_download: bool = False,
         local_files_only: bool = False,
-        token: str | bool | None = None,
+        token: str | bool  = None,
         revision: str = "main",
         model_max_length: int = VERY_LARGE_INTEGER,
         padding_side: str = "left",
         truncation_side: str = "right",
-        model_input_names: list[str] | None = None,
+        model_input_names: list[str]  = None,
         clean_up_tokenization_spaces: bool = False,
         **kwargs,
     ):
@@ -1912,10 +1912,10 @@ class MistralCommonBackend(PushToHubMixin):
         self,
         save_directory: str | os.PathLike | Path,
         push_to_hub: bool = False,
-        token: str | bool | None = None,
-        commit_message: str | None = None,
-        repo_id: str | None = None,
-        private: bool | None = None,
+        token: str | bool  = None,
+        commit_message: str  = None,
+        repo_id: str  = None,
+        private: bool  = None,
         **kwargs,
     ) -> tuple[str, ...]:
         """

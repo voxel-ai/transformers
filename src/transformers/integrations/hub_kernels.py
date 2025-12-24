@@ -268,10 +268,10 @@ _HUB_KERNEL_MAPPING: dict[str, dict[str, str]] = {
     "falcon_mamba-ssm": {"repo_id": "kernels-community/mamba-ssm", "revision": "v0.0.4"},
 }
 
-_KERNEL_MODULE_MAPPING: dict[str, ModuleType | None] = {}
+_KERNEL_MODULE_MAPPING: dict[str, ModuleType ] = {}
 
 
-def is_kernel(attn_implementation: str | None) -> bool:
+def is_kernel(attn_implementation: str ) -> bool:
     """Check whether `attn_implementation` matches a kernel pattern from the hub."""
     return (
         attn_implementation is not None
@@ -280,8 +280,8 @@ def is_kernel(attn_implementation: str | None) -> bool:
 
 
 def load_and_register_attn_kernel(
-    attn_implementation: str, attention_wrapper: Callable | None = None
-) -> ModuleType | None:
+    attn_implementation: str, attention_wrapper: Callable  = None
+) -> ModuleType :
     """
     Load and register the kernel associated to `attn_implementation`.
 
@@ -337,7 +337,7 @@ def load_and_register_attn_kernel(
     return kernel
 
 
-def lazy_load_kernel(kernel_name: str, mapping: dict[str, ModuleType | None] = _KERNEL_MODULE_MAPPING):
+def lazy_load_kernel(kernel_name: str, mapping: dict[str, ModuleType ] = _KERNEL_MODULE_MAPPING):
     if kernel_name in mapping and isinstance(mapping[kernel_name], ModuleType):
         return mapping[kernel_name]
     if kernel_name not in _HUB_KERNEL_MAPPING:
@@ -384,7 +384,7 @@ def lazy_load_kernel(kernel_name: str, mapping: dict[str, ModuleType | None] = _
     return mapping[kernel_name]
 
 
-def get_kernel(kernel_name: str, revision: str | None = None, version: str | None = None) -> ModuleType:
+def get_kernel(kernel_name: str, revision: str  = None, version: str  = None) -> ModuleType:
     from .. import __version__
 
     user_agent = {"framework": "transformers", "version": __version__, "repo_id": kernel_name}

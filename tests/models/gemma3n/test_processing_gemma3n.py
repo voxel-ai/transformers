@@ -34,7 +34,7 @@ class Gemma3nProcessorTest(ProcessorTesterMixin, unittest.TestCase):
     processor_class = Gemma3nProcessor
     model_id = "hf-internal-testing/namespace-google-repo_name-gemma-3n-E4B-it"
 
-    def prepare_image_inputs(self, batch_size: int | None = None, nested: bool = False):
+    def prepare_image_inputs(self, batch_size: int  = None, nested: bool = False):
         return super().prepare_image_inputs(batch_size=batch_size, nested=True)
 
     @classmethod

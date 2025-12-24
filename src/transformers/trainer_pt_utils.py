@@ -199,7 +199,7 @@ def nested_xla_mesh_reduce(tensors, name):
         raise ImportError("Torch xla must be installed to use `nested_xla_mesh_reduce`")
 
 
-def distributed_concat(tensor: Any, num_total_examples: int | None = None) -> Any:
+def distributed_concat(tensor: Any, num_total_examples: int  = None) -> Any:
     try:
         if isinstance(tensor, (tuple, list)):
             return type(tensor)(distributed_concat(t, num_total_examples) for t in tensor)
@@ -220,8 +220,8 @@ def distributed_concat(tensor: Any, num_total_examples: int | None = None) -> An
 
 def distributed_broadcast_scalars(
     scalars: list[int | float],
-    num_total_examples: int | None = None,
-    device: torch.device | None = torch.device("cuda"),
+    num_total_examples: int  = None,
+    device: torch.device  = torch.device("cuda"),
 ) -> torch.Tensor:
     try:
         tensorized_scalar = torch.tensor(scalars, device=device)
@@ -457,9 +457,9 @@ class LengthGroupedSampler(Sampler):
     def __init__(
         self,
         batch_size: int,
-        dataset: Dataset | None = None,
-        lengths: list[int] | None = None,
-        model_input_name: str | None = None,
+        dataset: Dataset  = None,
+        lengths: list[int]  = None,
+        model_input_name: str  = None,
         generator=None,
     ):
         if dataset is None and lengths is None:
@@ -501,13 +501,13 @@ class DistributedLengthGroupedSampler(DistributedSampler):
     def __init__(
         self,
         batch_size: int,
-        dataset: Dataset | None = None,
-        num_replicas: int | None = None,
-        rank: int | None = None,
+        dataset: Dataset  = None,
+        num_replicas: int  = None,
+        rank: int  = None,
         seed: int = 0,
         drop_last: bool = False,
-        lengths: list[int] | None = None,
-        model_input_name: str | None = None,
+        lengths: list[int]  = None,
+        model_input_name: str  = None,
     ):
         if dataset is None and lengths is None:
             raise ValueError("One of dataset and lengths must be provided.")
@@ -1095,7 +1095,7 @@ class AcceleratorConfig:
             " in your script multiplied by the number of processes."
         },
     )
-    dispatch_batches: bool | None = field(
+    dispatch_batches: bool  = field(
         default=None,
         metadata={
             "help": "If set to `True`, the dataloader prepared by the Accelerator is only iterated through on the main process"
@@ -1131,7 +1131,7 @@ class AcceleratorConfig:
         },
     )
 
-    gradient_accumulation_kwargs: dict | None = field(
+    gradient_accumulation_kwargs: dict  = field(
         default=None,
         metadata={
             "help": "Additional kwargs to configure gradient accumulation, see [`accelerate.utils.GradientAccumulationPlugin`]. "
@@ -1193,7 +1193,7 @@ class LayerWiseDummyOptimizer(torch.optim.Optimizer):
     def zero_grad(self, set_to_none: bool = True) -> None:
         pass
 
-    def step(self, closure=None) -> float | None:
+    def step(self, closure=None) -> float :
         pass
 
 

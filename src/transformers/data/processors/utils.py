@@ -42,8 +42,8 @@ class InputExample:
 
     guid: str
     text_a: str
-    text_b: str | None = None
-    label: str | None = None
+    text_b: str  = None
+    label: str  = None
 
     def to_json_string(self):
         """Serializes this instance to a JSON string."""
@@ -67,9 +67,9 @@ class InputFeatures:
     """
 
     input_ids: list[int]
-    attention_mask: list[int] | None = None
-    token_type_ids: list[int] | None = None
-    label: int | float | None = None
+    attention_mask: list[int]  = None
+    token_type_ids: list[int]  = None
+    label: int | float  = None
 
     def to_json_string(self):
         """Serializes this instance to a JSON string."""

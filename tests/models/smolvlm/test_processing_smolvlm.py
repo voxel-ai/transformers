@@ -67,14 +67,14 @@ class SmolVLMProcessorTest(ProcessorTesterMixin, unittest.TestCase):
         }
 
     # Override as SmolVLM needs images/video to be an explicitly nested batch
-    def prepare_image_inputs(self, batch_size: int | None = None):
+    def prepare_image_inputs(self, batch_size: int  = None):
         """This function prepares a list of PIL images for testing"""
         images = super().prepare_image_inputs(batch_size)
         if isinstance(images, (list, tuple)):
             images = [[image] for image in images]
         return images
 
-    def prepare_video_inputs(self, batch_size: int | None = None):
+    def prepare_video_inputs(self, batch_size: int  = None):
         """This function prepares a list of numpy videos."""
         video_input = [np.random.randint(255, size=(3, 30, 400), dtype=np.uint8)] * 8
         if batch_size is None:

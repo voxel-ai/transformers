@@ -46,7 +46,7 @@ if is_torchao_available():
 logger = logging.get_logger(__name__)
 
 
-def fuzzy_match_size(config_name: str) -> str | None:
+def fuzzy_match_size(config_name: str) -> str :
     """
     Extract the size digit from strings like "4weight", "8weight".
     Returns the digit as an integer if found, otherwise None.

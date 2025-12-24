@@ -76,9 +76,9 @@ class GlueDataset(Dataset):
         self,
         args: GlueDataTrainingArguments,
         tokenizer: PreTrainedTokenizerBase,
-        limit_length: int | None = None,
+        limit_length: int  = None,
         mode: str | Split = Split.train,
-        cache_dir: str | None = None,
+        cache_dir: str  = None,
     ):
         warnings.warn(
             "This dataset will be removed from the library soon, preprocessing should be handled with the Hugging Face Datasets "

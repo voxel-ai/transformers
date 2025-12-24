@@ -315,7 +315,7 @@ class AutoBitLinear(nn.Linear):
         return output
 
 
-def replace_with_bitnet_linear(model, modules_to_not_convert: list[str] | None = None, quantization_config=None):
+def replace_with_bitnet_linear(model, modules_to_not_convert: list[str]  = None, quantization_config=None):
     """
     Public method that replaces the linear layers of the given model with bitnet quantized layers.
 

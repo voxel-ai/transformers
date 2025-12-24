@@ -108,11 +108,11 @@ Offset = Union[torch.Tensor, int]
 # TODO: deprecate / rename to make_flex_block_mask for clarity as it's not only causal anymore
 def make_flex_block_causal_mask(
     attention_mask_2d: torch.Tensor,
-    attention_chunk_size: int | None = None,
+    attention_chunk_size: int  = None,
     query_length=None,
     key_length=None,
-    offsets: tuple[Offset, Offset] | None = None,
-    is_causal: bool | None = True,
+    offsets: tuple[Offset, Offset]  = None,
+    is_causal: bool  = True,
 ) -> "BlockMask":
     """
     IMPORTANT NOTICE: This function is deprecated in favor of using the mask primitives in `masking_utils.py`,
@@ -238,11 +238,11 @@ def flex_attention_forward(
     key: torch.Tensor,
     value: torch.Tensor,
     attention_mask: Union[torch.Tensor, "BlockMask"],
-    scaling: float | None = None,
-    softcap: float | None = None,
-    s_aux: torch.Tensor | None = None,
+    scaling: float  = None,
+    softcap: float  = None,
+    s_aux: torch.Tensor  = None,
     **kwargs,
-) -> tuple[torch.Tensor, torch.Tensor | None]:
+) -> tuple[torch.Tensor, torch.Tensor ]:
     if kwargs.get("dropout", 0.0) > 0:
         raise ValueError(
             "`flex_attention` does not support `dropout`. Please use it with inference"

@@ -1250,8 +1250,8 @@ class TestDeepSpeedWithLauncher(TestCasePlus):
         do_eval: bool = True,
         quality_checks: bool = True,
         fp32: bool = False,
-        extra_args_str: str | None = None,
-        remove_args_str: str | None = None,
+        extra_args_str: str  = None,
+        remove_args_str: str  = None,
     ):
         # we are doing quality testing so using a small real model
         output_dir = self.run_trainer(
@@ -1283,8 +1283,8 @@ class TestDeepSpeedWithLauncher(TestCasePlus):
         do_eval: bool = True,
         distributed: bool = True,
         fp32: bool = False,
-        extra_args_str: str | None = None,
-        remove_args_str: str | None = None,
+        extra_args_str: str  = None,
+        remove_args_str: str  = None,
     ):
         max_len = 32
         data_dir = self.test_file_dir / "../fixtures/tests_samples/wmt_en_ro"

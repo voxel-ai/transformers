@@ -35,8 +35,8 @@ class Bnb4bitQuantize(ConversionOps):
     def convert(
         self,
         input_dict: dict[str, list[torch.Tensor]],
-        full_layer_name: str | None = None,
-        model: torch.nn.Module | None = None,
+        full_layer_name: str  = None,
+        model: torch.nn.Module  = None,
         **kwargs,
     ) -> dict[str, torch.Tensor]:
         """
@@ -66,8 +66,8 @@ class Bnb4bitDeserialize(ConversionOps):
     def convert(
         self,
         input_dict: dict[str, list[torch.Tensor]],
-        model: torch.nn.Module | None = None,
-        full_layer_name: str | None = None,
+        model: torch.nn.Module  = None,
+        full_layer_name: str  = None,
         **kwargs,
     ) -> dict[str, torch.Tensor]:
         """
@@ -101,8 +101,8 @@ class Bnb8bitQuantize(ConversionOps):
     def convert(
         self,
         input_dict: dict[str, list[torch.Tensor]],
-        model: torch.nn.Module | None = None,
-        full_layer_name: str | None = None,
+        model: torch.nn.Module  = None,
+        full_layer_name: str  = None,
         **kwargs,
     ) -> dict[str, torch.Tensor]:
         value = list(input_dict.values())[0]
@@ -128,8 +128,8 @@ class Bnb8bitDeserialize(ConversionOps):
     def convert(
         self,
         input_dict: dict[str, list[torch.Tensor]],
-        model: torch.nn.Module | None = None,
-        full_layer_name: str | None = None,
+        model: torch.nn.Module  = None,
+        full_layer_name: str  = None,
         **kwargs,
     ) -> dict[str, torch.Tensor]:
         """
@@ -157,7 +157,7 @@ class Bnb8bitDeserialize(ConversionOps):
 
 def replace_with_bnb_linear(
     model: torch.nn.Module,
-    modules_to_not_convert: list[str] | None = None,
+    modules_to_not_convert: list[str]  = None,
     quantization_config=None,
     pre_quantized=False,
 ):

@@ -187,10 +187,10 @@ class AutomaticSpeechRecognitionPipeline(ChunkPipeline):
     def __init__(
         self,
         model: "PreTrainedModel",
-        feature_extractor: Union["SequenceFeatureExtractor", str] | None = None,
-        tokenizer: PreTrainedTokenizer | None = None,
-        decoder: Union["BeamSearchDecoderCTC", str] | None = None,
-        device: Union[int, "torch.device"] | None = None,
+        feature_extractor: Union["SequenceFeatureExtractor", str]  = None,
+        tokenizer: PreTrainedTokenizer  = None,
+        decoder: Union["BeamSearchDecoderCTC", str]  = None,
+        device: Union[int, "torch.device"]  = None,
         **kwargs,
     ):
         # set the model type so we can check we have the right pre- and post-processing parameters
@@ -588,7 +588,7 @@ class AutomaticSpeechRecognitionPipeline(ChunkPipeline):
         return {"is_last": is_last, **out, **extra}
 
     def postprocess(
-        self, model_outputs, decoder_kwargs: dict | None = None, return_timestamps=None, return_language=None
+        self, model_outputs, decoder_kwargs: dict  = None, return_timestamps=None, return_language=None
     ):
         # Optional return types
         optional = {}

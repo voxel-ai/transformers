@@ -329,7 +329,7 @@ class WeightTransform:
         self.collected_tensors[source_pattern].append(future)
         self.layer_targets[target_key].add(source_key)
 
-    def rename_source_key(self, source_key: str) -> tuple[str, str | None]:
+    def rename_source_key(self, source_key: str) -> tuple[str, str ]:
         """
         Return a tuple (renamed_key, source_pattern_producing_the_match).
         Try renaming `source_key` according to the source and target patterns of the current WeightTransform.
@@ -523,7 +523,7 @@ def _materialize_copy(tensor: torch.Tensor, device=None, dtype=None) -> torch.Te
 
 
 def spawn_materialize(
-    thread_pool: ThreadPoolExecutor | None, tensor: torch.Tensor, device=None, dtype=None
+    thread_pool: ThreadPoolExecutor , tensor: torch.Tensor, device=None, dtype=None
 ) -> Future | Callable:
     """Materialize a tensor from file asynchronously if `thread_pool` is provided, or return a Callable that will
     load the tensor synchronously when called."""
@@ -540,7 +540,7 @@ def spawn_materialize(
 
 
 def spawn_tp_materialize(
-    thread_pool: ThreadPoolExecutor | None, tensor: torch.Tensor, sharding_method, tensor_idx, dtype=None
+    thread_pool: ThreadPoolExecutor , tensor: torch.Tensor, sharding_method, tensor_idx, dtype=None
 ) -> Future | Callable:
     """Materialize and shard a tensor (according to the TP-plan) from file asynchronously if `thread_pool` is provided, or
     return a Callable that will load the tensor synchronously when called."""
@@ -681,9 +681,9 @@ def rename_source_key(
     source_key: str,
     weight_renamings: list[WeightRenaming],
     weight_converters: list[WeightConverter],
-    prefix: str | None = None,
-    meta_state_dict: dict | None = None,
-) -> tuple[str, str | None]:
+    prefix: str  = None,
+    meta_state_dict: dict  = None,
+) -> tuple[str, str ]:
     """
     Rename a source key given all the renaming and weight conversion patterns we have. Also takes care of adding/removing
     the base model prefix during loading if necesary.
@@ -718,15 +718,15 @@ def rename_source_key(
 def convert_and_load_state_dict_in_model(
     model: PreTrainedModel,
     state_dict: dict[str, Any],
-    weight_mapping: list[WeightConverter | WeightRenaming] | None,
-    tp_plan: dict[str, str] | None,
-    hf_quantizer: HfQuantizer | None,
-    dtype: torch.dtype | None = None,
-    device_map: dict | None = None,
-    dtype_plan: dict | None = None,
-    device_mesh: torch.distributed.device_mesh.DeviceMesh | None = None,
-    disk_offload_index: dict | None = None,
-    disk_offload_folder: str | None = None,
+    weight_mapping: list[WeightConverter | WeightRenaming] ,
+    tp_plan: dict[str, str] ,
+    hf_quantizer: HfQuantizer ,
+    dtype: torch.dtype  = None,
+    device_map: dict  = None,
+    dtype_plan: dict  = None,
+    device_mesh: torch.distributed.device_mesh.DeviceMesh  = None,
+    disk_offload_index: dict  = None,
+    disk_offload_folder: str  = None,
 ):
     r"""
     We build a mapping from the keys obtained by renaming each of the checkpoint keys according to the weight_mapping rules.

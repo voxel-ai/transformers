@@ -62,9 +62,9 @@ class BenchmarkConfig:
         sequence_length: int = 128,
         num_tokens_to_generate: int = 128,
         attn_implementation: str = "eager",
-        compile_kwargs: dict[str, Any] | None = None,
+        compile_kwargs: dict[str, Any]  = None,
         kernelize: bool = False,
-        name: str | None = None,
+        name: str  = None,
         skip_validity_check: bool = False,
     ) -> None:
         # Benchmark parameters

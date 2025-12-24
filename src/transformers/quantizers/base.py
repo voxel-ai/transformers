@@ -96,7 +96,7 @@ class HfQuantizer(ABC):
         """
         return dtype
 
-    def update_device_map(self, device_map: dict[str, Any] | None) -> dict[str, Any] | None:
+    def update_device_map(self, device_map: dict[str, Any] ) -> dict[str, Any] :
         """
         Override this method if you want to pass a override the existing device map with a new
         one. E.g. for bitsandbytes, since `accelerate` is a hard requirement, if no device_map is
@@ -219,8 +219,8 @@ class HfQuantizer(ABC):
     @staticmethod
     def get_modules_to_not_convert(
         model: "PreTrainedModel",
-        skip_modules: list[str] | None = None,
-        keep_in_fp32_modules: list[str] | None = None,
+        skip_modules: list[str]  = None,
+        keep_in_fp32_modules: list[str]  = None,
         add_default_skips: bool = False,
     ):
         if skip_modules is None or add_default_skips:

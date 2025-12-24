@@ -381,23 +381,23 @@ class Trainer:
 
     def __init__(
         self,
-        model: PreTrainedModel | nn.Module | None = None,
-        args: TrainingArguments | None = None,
-        data_collator: DataCollator | None = None,
-        train_dataset: Union[Dataset, IterableDataset, "datasets.Dataset"] | None = None,
-        eval_dataset: Union[Dataset, dict[str, Dataset], "datasets.Dataset"] | None = None,
+        model: PreTrainedModel | nn.Module  = None,
+        args: TrainingArguments  = None,
+        data_collator: DataCollator  = None,
+        train_dataset: Union[Dataset, IterableDataset, "datasets.Dataset"]  = None,
+        eval_dataset: Union[Dataset, dict[str, Dataset], "datasets.Dataset"]  = None,
         processing_class: PreTrainedTokenizerBase
         | BaseImageProcessor
         | FeatureExtractionMixin
         | ProcessorMixin
-        | None = None,
-        model_init: Callable[..., PreTrainedModel] | None = None,
-        compute_loss_func: Callable | None = None,
-        compute_metrics: Callable[[EvalPrediction], dict] | None = None,
-        callbacks: list[TrainerCallback] | None = None,
-        optimizers: tuple[torch.optim.Optimizer | None, torch.optim.lr_scheduler.LambdaLR | None] = (None, None),
-        optimizer_cls_and_kwargs: tuple[type[torch.optim.Optimizer], dict[str, Any]] | None = None,
-        preprocess_logits_for_metrics: Callable[[torch.Tensor, torch.Tensor], torch.Tensor] | None = None,
+         = None,
+        model_init: Callable[..., PreTrainedModel]  = None,
+        compute_loss_func: Callable  = None,
+        compute_metrics: Callable[[EvalPrediction], dict]  = None,
+        callbacks: list[TrainerCallback]  = None,
+        optimizers: tuple[torch.optim.Optimizer , torch.optim.lr_scheduler.LambdaLR ] = (None, None),
+        optimizer_cls_and_kwargs: tuple[type[torch.optim.Optimizer], dict[str, Any]]  = None,
+        preprocess_logits_for_metrics: Callable[[torch.Tensor, torch.Tensor], torch.Tensor]  = None,
     ):
         if args is None:
             output_dir = "tmp_trainer"
@@ -940,7 +940,7 @@ class Trainer:
             # Labels may be named label or label_ids, the default data collator handles that.
             self._signature_columns += list(set(["label", "label_ids"] + self.label_names))
 
-    def _remove_unused_columns(self, dataset: "datasets.Dataset", description: str | None = None):
+    def _remove_unused_columns(self, dataset: "datasets.Dataset", description: str  = None):
         if not self.args.remove_unused_columns:
             return dataset
         self._set_signature_columns_if_needed()
@@ -972,7 +972,7 @@ class Trainer:
         else:
             return dataset.remove_columns(ignored_columns)
 
-    def _get_collator_with_removed_columns(self, data_collator: Callable, description: str | None = None) -> Callable:
+    def _get_collator_with_removed_columns(self, data_collator: Callable, description: str  = None) -> Callable:
         """Wrap the data collator in a callable removing unused columns."""
         if not self.args.remove_unused_columns:
             return data_collator
@@ -988,7 +988,7 @@ class Trainer:
         )
         return remove_columns_collator
 
-    def _get_train_sampler(self, train_dataset: Dataset | None = None) -> torch.utils.data.Sampler | None:
+    def _get_train_sampler(self, train_dataset: Dataset  = None) -> torch.utils.data.Sampler :
         if train_dataset is None:
             train_dataset = self.train_dataset
         if train_dataset is None or not has_length(train_dataset):
@@ -1022,9 +1022,9 @@ class Trainer:
         dataset: Dataset,
         description: str,
         batch_size: int,
-        sampler_fn: Callable[[Dataset], torch.utils.data.Sampler] | None = None,
+        sampler_fn: Callable[[Dataset], torch.utils.data.Sampler]  = None,
         is_training: bool = False,
-        dataloader_key: str | None = None,
+        dataloader_key: str  = None,
     ) -> DataLoader:
         """Create a [`~torch.utils.data.DataLoader`] from the given dataset."""
 
@@ -1087,7 +1087,7 @@ class Trainer:
             is_training=True,
         )
 
-    def _get_eval_sampler(self, eval_dataset: Dataset) -> torch.utils.data.Sampler | None:
+    def _get_eval_sampler(self, eval_dataset: Dataset) -> torch.utils.data.Sampler :
         if eval_dataset is None or not has_length(eval_dataset):
             return None
 
@@ -1115,7 +1115,7 @@ class Trainer:
         else:
             return None
 
-    def get_eval_dataloader(self, eval_dataset: str | Dataset | None = None) -> DataLoader:
+    def get_eval_dataloader(self, eval_dataset: str | Dataset  = None) -> DataLoader:
         """
         Returns the evaluation [`~torch.utils.data.DataLoader`].
 
@@ -1281,7 +1281,7 @@ class Trainer:
             raise ValueError("Trainer optimizer is None, please make sure you have setup the optimizer before.")
         return [group["lr"] for group in self.optimizer.param_groups]
 
-    def get_optimizer_group(self, param: str | torch.nn.parameter.Parameter | None = None):
+    def get_optimizer_group(self, param: str | torch.nn.parameter.Parameter  = None):
         """
         Returns optimizer group for a parameter if given, else returns all optimizer groups for params.
 
@@ -1298,7 +1298,7 @@ class Trainer:
         return [group["params"] for group in self.optimizer.param_groups]
 
     @staticmethod
-    def get_optimizer_cls_and_kwargs(args: TrainingArguments, model: PreTrainedModel | None = None) -> tuple[Any, Any]:
+    def get_optimizer_cls_and_kwargs(args: TrainingArguments, model: PreTrainedModel  = None) -> tuple[Any, Any]:
         """
         Returns the optimizer class and optimizer parameters based on the training arguments.
 
@@ -1780,7 +1780,7 @@ class Trainer:
             return len(dataloader) * self.args.per_device_train_batch_size
 
     @staticmethod
-    def num_tokens(train_dl: DataLoader, max_steps: int | None = None) -> int:
+    def num_tokens(train_dl: DataLoader, max_steps: int  = None) -> int:
         """
         Helper to get number of tokens in a [`~torch.utils.data.DataLoader`] by enumerating dataloader.
         """
@@ -2067,9 +2067,9 @@ class Trainer:
 
     def train(
         self,
-        resume_from_checkpoint: str | bool | None = None,
+        resume_from_checkpoint: str | bool  = None,
         trial: Union["optuna.Trial", dict[str, Any], None] = None,
-        ignore_keys_for_eval: list[str] | None = None,
+        ignore_keys_for_eval: list[str]  = None,
     ):
         """
         Main training entry point.
@@ -2431,7 +2431,7 @@ class Trainer:
         self._total_loss_scalar = 0.0
         self._globalstep_last_logged = self.state.global_step
         model.zero_grad()
-        grad_norm: float | None = None
+        grad_norm: float  = None
         learning_rate = None
         self.control = self.callback_handler.on_train_begin(args, self.state, self.control)
 
@@ -3473,12 +3473,12 @@ class Trainer:
 
     def hyperparameter_search(
         self,
-        hp_space: Callable[["optuna.Trial"], dict[str, float]] | None = None,
-        compute_objective: Callable[[dict[str, float]], float] | None = None,
+        hp_space: Callable[["optuna.Trial"], dict[str, float]]  = None,
+        compute_objective: Callable[[dict[str, float]], float]  = None,
         n_trials: int = 20,
         direction: str | list[str] = "minimize",
-        backend: Union["str", HPSearchBackend] | None = None,
-        hp_name: Callable[["optuna.Trial"], str] | None = None,
+        backend: Union["str", HPSearchBackend]  = None,
+        hp_name: Callable[["optuna.Trial"], str]  = None,
         **kwargs,
     ) -> BestRun | list[BestRun]:
         """
@@ -3552,7 +3552,7 @@ class Trainer:
         self.hp_search_backend = None
         return best_run
 
-    def log(self, logs: dict[str, float], start_time: float | None = None) -> None:
+    def log(self, logs: dict[str, float], start_time: float  = None) -> None:
         """
         Log `logs` on the various objects watching training.
 
@@ -3757,7 +3757,7 @@ class Trainer:
 
         return ctx_stack
 
-    def autocast_smart_context_manager(self, cache_enabled: bool | None = True):
+    def autocast_smart_context_manager(self, cache_enabled: bool  = True):
         """
         A helper wrapper that creates an appropriate context manager for `autocast` while feeding it the desired
         arguments, depending on the situation. We rely on accelerate for autocast, hence we do nothing here.
@@ -3768,7 +3768,7 @@ class Trainer:
         self,
         model: nn.Module,
         inputs: dict[str, torch.Tensor | Any],
-        num_items_in_batch: torch.Tensor | None = None,
+        num_items_in_batch: torch.Tensor  = None,
     ) -> torch.Tensor:
         """
         Perform a training step on a batch of inputs.
@@ -3840,7 +3840,7 @@ class Trainer:
         model: nn.Module,
         inputs: dict[str, torch.Tensor | Any],
         return_outputs: bool = False,
-        num_items_in_batch: torch.Tensor | None = None,
+        num_items_in_batch: torch.Tensor  = None,
     ):
         """
         How the loss is computed by Trainer. By default, all models return the loss in the first element.
@@ -3986,7 +3986,7 @@ class Trainer:
         else:
             return self.args.process_index == 0
 
-    def save_model(self, output_dir: str | None = None, _internal_call: bool = False):
+    def save_model(self, output_dir: str  = None, _internal_call: bool = False):
         """
         Will save the model, so you can reload it using `from_pretrained()`.
 
@@ -4051,7 +4051,7 @@ class Trainer:
         if self.args.push_to_hub and not _internal_call:
             self.push_to_hub(commit_message="Model save", revision=self.args.hub_revision)
 
-    def _save_tpu(self, output_dir: str | None = None):
+    def _save_tpu(self, output_dir: str  = None):
         output_dir = output_dir if output_dir is not None else self.args.output_dir
 
         logger.info(f"Saving model checkpoint to {output_dir}")
@@ -4114,7 +4114,7 @@ class Trainer:
         if self.processing_class is not None and self.args.should_save:
             self.processing_class.save_pretrained(output_dir)
 
-    def _save(self, output_dir: str | None = None, state_dict=None):
+    def _save(self, output_dir: str  = None, state_dict=None):
         # If we are executing this function, we are the process zero, so we don't check for that.
         output_dir = output_dir if output_dir is not None else self.args.output_dir
         os.makedirs(output_dir, exist_ok=True)
@@ -4227,8 +4227,8 @@ class Trainer:
 
     def evaluate(
         self,
-        eval_dataset: Dataset | dict[str, Dataset] | None = None,
-        ignore_keys: list[str] | None = None,
+        eval_dataset: Dataset | dict[str, Dataset]  = None,
+        ignore_keys: list[str]  = None,
         metric_key_prefix: str = "eval",
     ) -> dict[str, float]:
         """
@@ -4327,7 +4327,7 @@ class Trainer:
         return output.metrics
 
     def predict(
-        self, test_dataset: Dataset, ignore_keys: list[str] | None = None, metric_key_prefix: str = "test"
+        self, test_dataset: Dataset, ignore_keys: list[str]  = None, metric_key_prefix: str = "test"
     ) -> PredictionOutput:
         """
         Run prediction and returns predictions and potential metrics.
@@ -4391,8 +4391,8 @@ class Trainer:
         self,
         dataloader: DataLoader,
         description: str,
-        prediction_loss_only: bool | None = None,
-        ignore_keys: list[str] | None = None,
+        prediction_loss_only: bool  = None,
+        ignore_keys: list[str]  = None,
         metric_key_prefix: str = "eval",
     ) -> EvalLoopOutput:
         """
@@ -4617,8 +4617,8 @@ class Trainer:
         model: nn.Module,
         inputs: dict[str, torch.Tensor | Any],
         prediction_loss_only: bool,
-        ignore_keys: list[str] | None = None,
-    ) -> tuple[torch.Tensor | None, torch.Tensor | None, torch.Tensor | None]:
+        ignore_keys: list[str]  = None,
+    ) -> tuple[torch.Tensor , torch.Tensor , torch.Tensor ]:
         """
         Perform an evaluation step on `model` using `inputs`.
 
@@ -4736,7 +4736,7 @@ class Trainer:
             return 6 * inputs[main_input].numel() * self.model.num_parameters(exclude_embeddings=True)
         return 0
 
-    def init_hf_repo(self, token: str | None = None):
+    def init_hf_repo(self, token: str  = None):
         """
         Initializes a git repo in `self.args.hub_model_id`.
         """
@@ -4756,15 +4756,15 @@ class Trainer:
 
     def create_model_card(
         self,
-        language: str | None = None,
-        license: str | None = None,
-        tags: str | list[str] | None = None,
-        model_name: str | None = None,
-        finetuned_from: str | None = None,
-        tasks: str | list[str] | None = None,
-        dataset_tags: str | list[str] | None = None,
-        dataset: str | list[str] | None = None,
-        dataset_args: str | list[str] | None = None,
+        language: str  = None,
+        license: str  = None,
+        tags: str | list[str]  = None,
+        model_name: str  = None,
+        finetuned_from: str  = None,
+        tasks: str | list[str]  = None,
+        dataset_tags: str | list[str]  = None,
+        dataset: str | list[str]  = None,
+        dataset_args: str | list[str]  = None,
     ):
         """
         Creates a draft of a model card using the information available to the `Trainer`.
@@ -4906,10 +4906,10 @@ class Trainer:
 
     def push_to_hub(
         self,
-        commit_message: str | None = "End of training",
+        commit_message: str  = "End of training",
         blocking: bool = True,
-        token: str | None = None,
-        revision: str | None = None,
+        token: str  = None,
+        revision: str  = None,
         **kwargs,
     ) -> CommitInfo:
         """
@@ -5185,7 +5185,7 @@ class Trainer:
                     self.model.hf_quantizer.quantization_config.bnb_4bit_quant_storage, override=True
                 )
 
-    def _get_num_items_in_batch(self, batch_samples: list, device: torch.device) -> torch.Tensor | int | None:
+    def _get_num_items_in_batch(self, batch_samples: list, device: torch.device) -> torch.Tensor | int :
         """
         Counts the number of items in the batches to properly scale the loss.
         Args:
@@ -5239,7 +5239,7 @@ class Trainer:
 
     def get_batch_samples(
         self, epoch_iterator: Iterator, num_batches: int, device: torch.device
-    ) -> tuple[list, torch.Tensor | int | None]:
+    ) -> tuple[list, torch.Tensor | int ]:
         """
         Collects a specified number of batches from the epoch iterator and optionally counts the number of items in the batches to properly scale the loss.
         """

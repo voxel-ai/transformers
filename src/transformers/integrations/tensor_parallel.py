@@ -43,7 +43,7 @@ if is_torch_available():
 
 
 def initialize_tensor_parallelism(
-    tp_plan: str | dict[str, str] | None, tp_size: int | None = None, device_mesh=None, device_map=None
+    tp_plan: str | dict[str, str] , tp_size: int  = None, device_mesh=None, device_map=None
 ):
     r"""
     Sets up the device mesh and initialized the backend for tensor parallelism.
@@ -154,7 +154,7 @@ def replace_layer_number_by_wildcard(name: str) -> str:
     return re.sub(r"\.\d+(\.|$)", lambda m: ".*" + m.group(1), name)
 
 
-def _get_parameter_tp_plan(parameter_name: str, tp_plan: dict[str, str], is_weight=True) -> str | None:
+def _get_parameter_tp_plan(parameter_name: str, tp_plan: dict[str, str], is_weight=True) -> str :
     """
     Get the TP style for a parameter from the TP plan.
 
@@ -321,7 +321,7 @@ def repack_weights(
     return final_ordered_tensor
 
 
-def get_tensor_shard(param, empty_param, device_mesh, rank, dim, tensor_idx: int | None = None):
+def get_tensor_shard(param, empty_param, device_mesh, rank, dim, tensor_idx: int  = None):
     """
     Generalized tensor sharding across a multi-dimensional device mesh.
     Extract only the fraction of the parameter owned by the given `rank` when the parameter would have gone sharding at provided `dim`.
@@ -492,8 +492,8 @@ class GatherParallel(TensorParallelLayer):
 
     def __init__(
         self,
-        input_layouts: Placement | None = None,
-        output_layouts: Placement | None = None,
+        input_layouts: Placement  = None,
+        output_layouts: Placement  = None,
         use_local_output: bool = True,
         **kwargs,
     ):
@@ -658,8 +658,8 @@ class ColwiseParallel(TensorParallelLayer):
 
     def __init__(
         self,
-        input_layouts: Placement | None = None,
-        output_layouts: Placement | None = None,
+        input_layouts: Placement  = None,
+        output_layouts: Placement  = None,
         use_local_output: bool = True,
         use_dtensor=True,
         **kwargs,
@@ -797,8 +797,8 @@ class RowwiseParallel(TensorParallelLayer):
 
     def __init__(
         self,
-        input_layouts: Placement | None = None,
-        output_layouts: Placement | None = None,
+        input_layouts: Placement  = None,
+        output_layouts: Placement  = None,
         use_local_output: bool = True,
         use_dtensor: bool = True,
         **kwargs,
@@ -1354,7 +1354,7 @@ def shard_and_distribute_module(
     return param
 
 
-def verify_tp_plan(expected_keys: list[str], tp_plan: dict[str, str] | None):
+def verify_tp_plan(expected_keys: list[str], tp_plan: dict[str, str] ):
     """
     Verify the TP plan of the model, log a warning if the layers that were not sharded and the rules that were not applied.
     """

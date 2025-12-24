@@ -176,7 +176,7 @@ DOCSTRING_NODE = m.SimpleStatementLine(
 )
 
 
-def get_full_attribute_name(node: cst.Attribute | cst.Name) -> str | None:
+def get_full_attribute_name(node: cst.Attribute | cst.Name) -> str :
     """Get the full name of an Attribute or Name node (e.g. `"nn.Module"` for an Attribute representing it). If the
     successive value of an Attribute are not Name nodes, return `None`."""
     if m.matches(node, m.Name()):
@@ -377,9 +377,9 @@ class ReplaceSuperCallTransformer(cst.CSTTransformer):
 
 def find_all_dependencies(
     dependency_mapping: dict[str, set],
-    start_entity: str | None = None,
-    initial_dependencies: set | None = None,
-    initial_checked_dependencies: set | None = None,
+    start_entity: str  = None,
+    initial_dependencies: set  = None,
+    initial_checked_dependencies: set  = None,
     return_parent: bool = False,
 ) -> list | set:
     """Return all the dependencies of the given `start_entity` or `initial_dependencies`. This is basically some kind of
@@ -390,12 +390,12 @@ def find_all_dependencies(
             A mapping from entities (usually function/assignment names), to immediate dependencies. That is, for function names,
             a mapping {"foo": {"bar", "test"}} would indicate that functions `bar` and `test` are immediately called
             in `foo`'s definition.
-        start_entity (str | None, *optional*):
+        start_entity (str , *optional*):
             A key of `dependency_mapping`, indicating from which entity to start the search.
-        initial_dependencies (set | None, *optional*):
+        initial_dependencies (set , *optional*):
             If `start_entity` is not provided, this can be used as an alternative. In this case, the search will continue
             from all the entities in `initial_dependencies`, if they are in `dependency_mapping`.
-        initial_checked_dependencies (set | None, *optional*):
+        initial_checked_dependencies (set , *optional*):
             If provided, entities already present in `initial_checked_dependencies` will not be part of the returned dependencies.
         return_parent (bool, *optional*):
             If `True`, will return a list consisting of tuples (dependency, parent) instead of a simple set of dependencies. Note
@@ -475,7 +475,7 @@ class ClassDependencyMapper(CSTVisitor):
     """
 
     def __init__(
-        self, class_name: str, global_names: set[str], objects_imported_from_modeling: set[str] | None = None
+        self, class_name: str, global_names: set[str], objects_imported_from_modeling: set[str]  = None
     ):
         super().__init__()
         self.class_name = class_name
@@ -503,7 +503,7 @@ def dependencies_for_class_node(node: cst.ClassDef, global_names: set[str]) -> s
 
 
 def augmented_dependencies_for_class_node(
-    node: cst.ClassDef, mapper: "ModuleMapper", objects_imported_from_modeling: set[str] | None = None
+    node: cst.ClassDef, mapper: "ModuleMapper", objects_imported_from_modeling: set[str]  = None
 ) -> set:
     """Create augmented dependencies for a class node based on a `mapper`.
     Augmented dependencies means immediate dependencies + recursive function and assignments dependencies.
@@ -1668,8 +1668,8 @@ def get_class_node_and_dependencies(
 
 def create_modules(
     modular_mapper: ModularFileMapper,
-    file_path: str | None = None,
-    package_name: str | None = "transformers",
+    file_path: str  = None,
+    package_name: str  = "transformers",
 ) -> dict[str, cst.Module]:
     """Create all the new modules based on visiting the modular file. It replaces all classes as necessary."""
     files = defaultdict(dict)
@@ -1756,7 +1756,7 @@ def run_ruff(code, check=False):
     return stdout.decode()
 
 
-def convert_modular_file(modular_file: str, source_library: str | None = "transformers") -> dict[str, str]:
+def convert_modular_file(modular_file: str, source_library: str  = "transformers") -> dict[str, str]:
     """Convert a `modular_file` into all the different model-specific files it depicts."""
     pattern = re.search(r"modular_(.*)(?=\.py$)", modular_file)
     output = {}
@@ -1827,7 +1827,7 @@ def count_loc(file_path: str) -> int:
     return len([line for line in comment_less_code.split("\n") if line.strip()])
 
 
-def run_converter(modular_file: str, source_library: str | None = "transformers"):
+def run_converter(modular_file: str, source_library: str  = "transformers"):
     """Convert a modular file, and save resulting files."""
     print(f"Converting {modular_file} to a single model single file format")
     converted_files = convert_modular_file(modular_file, source_library=source_library)

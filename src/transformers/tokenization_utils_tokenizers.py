@@ -543,8 +543,8 @@ class TokenizersBackend(PreTrainedTokenizerBase):
     def _convert_encoding(
         self,
         encoding: EncodingFast,
-        return_token_type_ids: bool | None = None,
-        return_attention_mask: bool | None = None,
+        return_token_type_ids: bool  = None,
+        return_attention_mask: bool  = None,
         return_overflowing_tokens: bool = False,
         return_special_tokens_mask: bool = False,
         return_offsets_mapping: bool = False,
@@ -593,7 +593,7 @@ class TokenizersBackend(PreTrainedTokenizerBase):
             return self.unk_token_id
         return index
 
-    def _convert_id_to_token(self, index: int) -> str | None:
+    def _convert_id_to_token(self, index: int) -> str :
         return self._tokenizer.id_to_token(int(index))
 
     def _add_tokens(self, new_tokens: list[str | AddedToken], special_tokens=False) -> int:
@@ -649,7 +649,7 @@ class TokenizersBackend(PreTrainedTokenizerBase):
             tokens.append(self._tokenizer.id_to_token(index))
         return tokens
 
-    def tokenize(self, text: str, pair: str | None = None, add_special_tokens: bool = False, **kwargs) -> list[str]:
+    def tokenize(self, text: str, pair: str  = None, add_special_tokens: bool = False, **kwargs) -> list[str]:
         return self._encode_plus(text=text, text_pair=pair, add_special_tokens=add_special_tokens, **kwargs).tokens()
 
     def set_truncation_and_padding(
@@ -658,8 +658,8 @@ class TokenizersBackend(PreTrainedTokenizerBase):
         truncation_strategy: TruncationStrategy,
         max_length: int,
         stride: int,
-        pad_to_multiple_of: int | None,
-        padding_side: str | None,
+        pad_to_multiple_of: int ,
+        padding_side: str ,
     ):
         """
         Define the truncation and the padding strategies for fast tokenizers (provided by HuggingFace tokenizers
@@ -734,14 +734,14 @@ class TokenizersBackend(PreTrainedTokenizerBase):
         add_special_tokens: bool = True,
         padding_strategy: PaddingStrategy = PaddingStrategy.DO_NOT_PAD,
         truncation_strategy: TruncationStrategy = TruncationStrategy.DO_NOT_TRUNCATE,
-        max_length: int | None = None,
+        max_length: int  = None,
         stride: int = 0,
         is_split_into_words: bool = False,
-        pad_to_multiple_of: int | None = None,
-        padding_side: str | None = None,
-        return_tensors: bool | None = None,
-        return_token_type_ids: bool | None = None,
-        return_attention_mask: bool | None = None,
+        pad_to_multiple_of: int  = None,
+        padding_side: str  = None,
+        return_tensors: bool  = None,
+        return_token_type_ids: bool  = None,
+        return_attention_mask: bool  = None,
         return_overflowing_tokens: bool = False,
         return_special_tokens_mask: bool = False,
         return_offsets_mapping: bool = False,
@@ -892,7 +892,7 @@ class TokenizersBackend(PreTrainedTokenizerBase):
         self,
         token_ids: int | list[int],
         skip_special_tokens: bool = False,
-        clean_up_tokenization_spaces: bool | None = None,
+        clean_up_tokenization_spaces: bool  = None,
         **kwargs,
     ) -> str:
         # Removed: use_source_tokenizer parameter (unused)
@@ -906,8 +906,8 @@ class TokenizersBackend(PreTrainedTokenizerBase):
         self,
         save_directory: str | os.PathLike,
         file_names: tuple[str, ...],
-        legacy_format: bool | None = None,
-        filename_prefix: str | None = None,
+        legacy_format: bool  = None,
+        filename_prefix: str  = None,
     ) -> tuple[str, ...]:
         save_directory = str(save_directory)
 

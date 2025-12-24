@@ -88,7 +88,7 @@ class VideoClassificationPipeline(Pipeline):
     @overload
     def __call__(self, inputs: list[str], **kwargs: Any) -> list[list[dict[str, Any]]]: ...
 
-    def __call__(self, inputs: str | list[str] | None = None, **kwargs):
+    def __call__(self, inputs: str | list[str]  = None, **kwargs):
         """
         Assign labels to the video(s) passed as inputs.
 

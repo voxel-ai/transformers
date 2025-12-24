@@ -66,7 +66,7 @@ class GroundingDinoProcessorTest(ProcessorTesterMixin, unittest.TestCase):
     def test_tokenizer_defaults(self):
         pass
 
-    def prepare_text_inputs(self, batch_size: int | None = None, **kwargs):
+    def prepare_text_inputs(self, batch_size: int  = None, **kwargs):
         labels = ["a cat", "remote control"]
         labels_longer = ["a person", "a car", "a dog", "a cat"]
 

@@ -101,7 +101,7 @@ def get_modified_cards() -> list[str]:
     return model_names
 
 
-def get_paper_link(model_card: str | None, path: str | None) -> str:
+def get_paper_link(model_card: str , path: str ) -> str:
     """Get the first paper link from the model card content."""
 
     if model_card is not None and not model_card.endswith(".md"):
@@ -141,7 +141,7 @@ def get_paper_link(model_card: str | None, path: str | None) -> str:
     return paper_ids[0]
 
 
-def get_first_commit_date(model_name: str | None) -> str:
+def get_first_commit_date(model_name: str ) -> str:
     """Get the first commit date of the model's init file or model.md. This date is considered as the date the model was added to HF transformers"""
 
     if model_name.endswith(".md"):

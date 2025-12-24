@@ -122,7 +122,7 @@ class GPURawMetrics:
 class GPUMonitor:
     """Monitor GPU utilization during benchmark execution."""
 
-    def __init__(self, sample_interval_sec: float = 0.1, logger: Logger | None = None):
+    def __init__(self, sample_interval_sec: float = 0.1, logger: Logger  = None):
         self.sample_interval_sec = sample_interval_sec
         self.logger = logger if logger is not None else logging.getLogger(__name__)
 

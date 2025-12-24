@@ -32,7 +32,7 @@ class QuarkDeserialize(ConversionOps):
         input_dict: torch.Tensor,
         model: Optional[torch.nn.Module] = None,
         missing_keys: Optional[list[str]] = None,
-        full_layer_name: str | None = None,
+        full_layer_name: str  = None,
         **kwargs,
     ) -> dict[str, torch.Tensor]:
         # target_key should be in the form of weight_scale, bias_scale, input_scale, output_scale, weight_zero_point, bias_zero_point, input_zero_point, output_zero_point

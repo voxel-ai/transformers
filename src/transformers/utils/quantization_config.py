@@ -298,8 +298,8 @@ class HqqConfig(QuantizationConfigMixin):
         nbits: int = 4,
         group_size: int = 64,
         view_as_float: bool = False,
-        axis: int | None = None,
-        dynamic_config: dict | None = None,
+        axis: int  = None,
+        dynamic_config: dict  = None,
         skip_modules: list[str] = ["lm_head"],
         **kwargs,
     ):
@@ -680,7 +680,7 @@ class GPTQConfig(QuantizationConfigMixin):
         self,
         bits: int,
         tokenizer: Any = None,
-        dataset: list[str] | str | None = None,
+        dataset: list[str] | str  = None,
         group_size: int = 128,
         damp_percent: float = 0.1,
         desc_act: bool = False,
@@ -697,7 +697,7 @@ class GPTQConfig(QuantizationConfigMixin):
         pad_token_id: Optional[int] = None,
         max_input_length: Optional[int] = None,
         cache_block_outputs: bool = True,
-        modules_in_block_to_quantize: list[list[str]] | None = None,
+        modules_in_block_to_quantize: list[list[str]]  = None,
         **kwargs,
     ):
         self.quant_method = QuantizationMethod.GPTQ
@@ -819,7 +819,7 @@ class AwqConfig(GPTQConfig):
         group_size: int = 128,
         zero_point: bool = True,
         backend: AwqBackend = AwqBackend.AUTO,
-        modules_to_not_convert: list | None = None,
+        modules_to_not_convert: list  = None,
         **kwargs,
     ):
         format = kwargs.pop("format", AwqFormat.GEMM)
@@ -884,7 +884,7 @@ class AqlmConfig(QuantizationConfigMixin):
         out_group_size: int = 1,
         num_codebooks: int = 1,
         nbits_per_codebook: int = 16,
-        linear_weights_not_to_quantize: list[str] | None = None,
+        linear_weights_not_to_quantize: list[str]  = None,
         **kwargs,
     ):
         self.quant_method = QuantizationMethod.AQLM
@@ -994,7 +994,7 @@ class VptqConfig(QuantizationConfigMixin):
         enable_proxy_error: bool = False,
         config_for_layers: dict[str, Any] = {},
         shared_layer_config: dict[str, Any] = {},
-        modules_to_not_convert: list | None = None,
+        modules_to_not_convert: list  = None,
         **kwargs,
     ):
         self.quant_method = QuantizationMethod.VPTQ
@@ -1034,7 +1034,7 @@ class QuantoConfig(QuantizationConfigMixin):
         self,
         weights="int8",
         activations=None,
-        modules_to_not_convert: list | None = None,
+        modules_to_not_convert: list  = None,
         **kwargs,
     ):
         self.quant_method = QuantizationMethod.QUANTO
@@ -1072,7 +1072,7 @@ class EetqConfig(QuantizationConfigMixin):
     def __init__(
         self,
         weights: str = "int8",
-        modules_to_not_convert: list | None = None,
+        modules_to_not_convert: list  = None,
         **kwargs,
     ):
         self.quant_method = QuantizationMethod.EETQ
@@ -1117,13 +1117,13 @@ class CompressedTensorsConfig(QuantizationConfigMixin):
 
     def __init__(
         self,
-        config_groups: dict[str, Union["QuantizationScheme", list[str]]] | None = None,  # noqa: F821
+        config_groups: dict[str, Union["QuantizationScheme", list[str]]]  = None,  # noqa: F821
         format: str = "dense",
         quantization_status: "QuantizationStatus" = "initialized",  # noqa: F821
         kv_cache_scheme: Optional["QuantizationArgs"] = None,  # noqa: F821
-        global_compression_ratio: float | None = None,
-        ignore: list[str] | None = None,
-        sparsity_config: dict[str, Any] | None = None,
+        global_compression_ratio: float  = None,
+        ignore: list[str]  = None,
+        sparsity_config: dict[str, Any]  = None,
         quant_method: str = "compressed-tensors",
         run_compressed: bool = True,
         **kwargs,
@@ -1288,7 +1288,7 @@ class FbgemmFp8Config(QuantizationConfigMixin):
     def __init__(
         self,
         activation_scale_ub: float = 1200.0,
-        modules_to_not_convert: list | None = None,
+        modules_to_not_convert: list  = None,
         **kwargs,
     ):
         self.quant_method = QuantizationMethod.FBGEMM_FP8
@@ -1326,10 +1326,10 @@ class HiggsConfig(QuantizationConfigMixin):
         self,
         bits: int = 4,
         p: int = 2,
-        modules_to_not_convert: list[str] | None = None,
+        modules_to_not_convert: list[str]  = None,
         hadamard_size: int = 512,
         group_size: int = 256,
-        tune_metadata: dict[str, Any] | None = None,
+        tune_metadata: dict[str, Any]  = None,
         **kwargs,
     ):
         if tune_metadata is None:
@@ -1388,10 +1388,10 @@ class FPQuantConfig(QuantizationConfigMixin):
         forward_method: str = "abs_max",
         backward_dtype: str = "bf16",
         store_master_weights: bool = False,
-        hadamard_group_size: int | None = None,
+        hadamard_group_size: int  = None,
         pseudoquantization: bool = False,
         transform_init: str = "hadamard",
-        modules_to_not_convert: list[str] | None = None,
+        modules_to_not_convert: list[str]  = None,
         **kwargs,
     ):
         self.forward_dtype = forward_dtype
@@ -1451,7 +1451,7 @@ class FPQuantConfig(QuantizationConfigMixin):
 class TorchAoConfig(QuantizationConfigMixin):
     quant_method: QuantizationMethod
     quant_type: Union[str, "AOBaseConfig"]  # noqa: F821
-    modules_to_not_convert: list | None
+    modules_to_not_convert: list 
     quant_type_kwargs: dict[str, Any]
     include_input_output_embeddings: bool
     untie_embedding_weights: bool
@@ -1515,7 +1515,7 @@ class TorchAoConfig(QuantizationConfigMixin):
     def __init__(
         self,
         quant_type: Union[str, "AOBaseConfig"],  # noqa: F821
-        modules_to_not_convert: list | None = None,
+        modules_to_not_convert: list  = None,
         include_input_output_embeddings: bool = False,
         untie_embedding_weights: bool = False,
         **kwargs,
@@ -1716,11 +1716,11 @@ class BitNetQuantConfig(QuantizationConfigMixin):
 
     def __init__(
         self,
-        modules_to_not_convert: list | None = None,
+        modules_to_not_convert: list  = None,
         linear_class: str = "bitlinear",
         quantization_mode: str = "offline",
         use_rms_norm: bool = False,
-        rms_norm_eps: float | None = 1e-6,
+        rms_norm_eps: float  = 1e-6,
         **kwargs,
     ):
         if linear_class not in ["bitlinear", "autobitlinear"]:
@@ -1769,8 +1769,8 @@ class SpQRConfig(QuantizationConfigMixin):
         bits: int = 3,
         beta1: int = 16,
         beta2: int = 16,
-        shapes: dict[str, int] | None = None,
-        modules_to_not_convert: list[str] | None = None,
+        shapes: dict[str, int]  = None,
+        modules_to_not_convert: list[str]  = None,
         **kwargs,
     ):
         if shapes is None:
@@ -1825,7 +1825,7 @@ class FineGrainedFP8Config(QuantizationConfigMixin):
         activation_scheme: str = "dynamic",
         weight_block_size: tuple[int, int] = (128, 128),
         dequantize: bool = False,
-        modules_to_not_convert: list | None = None,
+        modules_to_not_convert: list  = None,
         **kwargs,
     ):
         self.quant_method = QuantizationMethod.FP8
@@ -1908,7 +1908,7 @@ class Mxfp4Config(QuantizationConfigMixin):
 
     def __init__(
         self,
-        modules_to_not_convert: list | None = None,
+        modules_to_not_convert: list  = None,
         dequantize: bool = False,
         **kwargs,
     ):

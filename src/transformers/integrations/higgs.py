@@ -497,8 +497,8 @@ class HiggsLinear(torch.nn.Module):
         out_features: int,
         num_bits: int,
         bias=True,
-        dtype: torch.dtype | None = None,
-        device: torch.device | None = None,
+        dtype: torch.dtype  = None,
+        device: torch.device  = None,
         group_size: int = 256,
         hadamard_size: int = 1024,
     ):
@@ -550,7 +550,7 @@ class HiggsLinear(torch.nn.Module):
         )
 
 
-def replace_with_higgs_linear(model, modules_to_not_convert: list[str] | None = None, quantization_config=None):
+def replace_with_higgs_linear(model, modules_to_not_convert: list[str]  = None, quantization_config=None):
     """
     Public method that replaces the Linear layers of the given model with HIGGS quantized layers.
 

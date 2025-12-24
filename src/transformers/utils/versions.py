@@ -45,7 +45,7 @@ def _compare_versions(op, got_ver, want_ver, requirement, pkg, hint):
         )
 
 
-def require_version(requirement: str, hint: str | None = None) -> None:
+def require_version(requirement: str, hint: str  = None) -> None:
     """
     Perform a runtime check of the dependency versions, using the exact same syntax used by pip.
 

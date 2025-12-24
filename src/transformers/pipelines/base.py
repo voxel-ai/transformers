@@ -179,8 +179,8 @@ def pad_collate_fn(tokenizer, feature_extractor):
 def load_model(
     model,
     config: AutoConfig,
-    model_classes: tuple[type, ...] | None = None,
-    task: str | None = None,
+    model_classes: tuple[type, ...]  = None,
+    task: str  = None,
     **model_kwargs,
 ):
     """
@@ -272,7 +272,7 @@ def load_model(
     return model
 
 
-def get_default_model_and_revision(targeted_task: dict, task_options: Any | None) -> tuple[str, str]:
+def get_default_model_and_revision(targeted_task: dict, task_options: Any ) -> tuple[str, str]:
     """
     Select a default model to use for a given task.
 
@@ -307,9 +307,9 @@ def get_default_model_and_revision(targeted_task: dict, task_options: Any | None
 
 def load_assistant_model(
     model: "PreTrainedModel",
-    assistant_model: Union[str, "PreTrainedModel"] | None,
-    assistant_tokenizer: PreTrainedTokenizer | None,
-) -> tuple[Optional["PreTrainedModel"], PreTrainedTokenizer | None]:
+    assistant_model: Union[str, "PreTrainedModel"] ,
+    assistant_tokenizer: PreTrainedTokenizer ,
+) -> tuple[Optional["PreTrainedModel"], PreTrainedTokenizer ]:
     """
     Prepares the assistant model and the assistant tokenizer for a pipeline whose model that can call `generate`.
 
@@ -406,9 +406,9 @@ class PipelineDataFormat:
 
     def __init__(
         self,
-        output_path: str | None,
-        input_path: str | None,
-        column: str | None,
+        output_path: str ,
+        input_path: str ,
+        column: str ,
         overwrite: bool = False,
     ):
         self.output_path = output_path
@@ -462,9 +462,9 @@ class PipelineDataFormat:
     @staticmethod
     def from_str(
         format: str,
-        output_path: str | None,
-        input_path: str | None,
-        column: str | None,
+        output_path: str ,
+        input_path: str ,
+        column: str ,
         overwrite=False,
     ) -> "PipelineDataFormat":
         """
@@ -509,9 +509,9 @@ class CsvPipelineDataFormat(PipelineDataFormat):
 
     def __init__(
         self,
-        output_path: str | None,
-        input_path: str | None,
-        column: str | None,
+        output_path: str ,
+        input_path: str ,
+        column: str ,
         overwrite=False,
     ):
         super().__init__(output_path, input_path, column, overwrite=overwrite)
@@ -553,9 +553,9 @@ class JsonPipelineDataFormat(PipelineDataFormat):
 
     def __init__(
         self,
-        output_path: str | None,
-        input_path: str | None,
-        column: str | None,
+        output_path: str ,
+        input_path: str ,
+        column: str ,
         overwrite=False,
     ):
         super().__init__(output_path, input_path, column, overwrite=overwrite)
@@ -778,13 +778,13 @@ class Pipeline(_ScikitCompat, PushToHubMixin):
     def __init__(
         self,
         model: "PreTrainedModel",
-        tokenizer: PreTrainedTokenizer | None = None,
+        tokenizer: PreTrainedTokenizer  = None,
         feature_extractor: Optional[PreTrainedFeatureExtractor] = None,
-        image_processor: BaseImageProcessor | None = None,
-        processor: ProcessorMixin | None = None,
-        modelcard: ModelCard | None = None,
+        image_processor: BaseImageProcessor  = None,
+        processor: ProcessorMixin  = None,
+        modelcard: ModelCard  = None,
         task: str = "",
-        device: Union[int, "torch.device"] | None = None,
+        device: Union[int, "torch.device"]  = None,
         binary_output: bool = False,
         **kwargs,
     ):
@@ -1365,9 +1365,9 @@ class PipelineRegistry:
         self,
         task: str,
         pipeline_class: type,
-        pt_model: type | tuple[type] | None = None,
-        default: dict | None = None,
-        type: str | None = None,
+        pt_model: type | tuple[type]  = None,
+        default: dict  = None,
+        type: str  = None,
     ) -> None:
         if task in self.supported_tasks:
             logger.warning(f"{task} is already registered. Overwriting pipeline for task {task}...")

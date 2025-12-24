@@ -349,7 +349,7 @@ def w8a8_block_fp8_matmul_compile(
     weight_q: torch.Tensor,  # [out_features, hidden_dim]
     input_scale: torch.Tensor,  # [batch * seq_len, num_input_groups]
     weight_scale: torch.Tensor,  # [num_weight_blocks_m, num_weight_blocks_n]
-    block_size: tuple[int, int] | None = None,  # (M=128, N=128) for weights for example
+    block_size: tuple[int, int]  = None,  # (M=128, N=128) for weights for example
     output_dtype: torch.dtype = torch.float32,
 ) -> torch.Tensor:
     """
@@ -416,7 +416,7 @@ class FP8Linear(nn.Linear):
         out_features: int,
         bias: bool = False,
         dtype=torch.float8_e4m3fn,
-        block_size: tuple[int, int] | None = None,
+        block_size: tuple[int, int]  = None,
         activation_scheme="dynamic",
     ):
         super().__init__(in_features, out_features)
@@ -588,7 +588,7 @@ class FP8Expert(nn.Module):
 
 
 def replace_with_fp8_linear(
-    model, modules_to_not_convert: list[str] | None = None, quantization_config=None, pre_quantized=False
+    model, modules_to_not_convert: list[str]  = None, quantization_config=None, pre_quantized=False
 ):
     """
     A helper function to replace all `torch.nn.Linear` modules by `FP8Linear` modules.
@@ -723,7 +723,7 @@ class Fp8Dequantize(ConversionOps):
     def convert(
         self,
         input_dict: dict[str, torch.Tensor],
-        full_layer_name: str | None = None,
+        full_layer_name: str  = None,
         **kwargs,
     ) -> dict[str, torch.Tensor]:
         if len(input_dict) < 2:

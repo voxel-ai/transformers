@@ -105,11 +105,11 @@ class RichInterface:
         self.model_id = model_id
         self.user_id = user_id
 
-    async def stream_output(self, stream: AsyncIterator[ChatCompletionStreamOutput]) -> tuple[str, str | Any | None]:
+    async def stream_output(self, stream: AsyncIterator[ChatCompletionStreamOutput]) -> tuple[str, str | Any ]:
         self._console.print(f"[bold blue]<{self.model_id}>:")
         with Live(console=self._console, refresh_per_second=4) as live:
             text = ""
-            finish_reason: str | None = None
+            finish_reason: str  = None
             async for token in await stream:
                 outputs = token.choices[0].delta.content
                 finish_reason = getattr(token.choices[0], "finish_reason", finish_reason)
@@ -209,7 +209,7 @@ class Chat:
             Optional[str], typer.Argument(help="Base url to connect to (e.g. http://localhost:8000/v1).")
         ] = f"http://{DEFAULT_HTTP_ENDPOINT['hostname']}:{DEFAULT_HTTP_ENDPOINT['port']}",
         generate_flags: Annotated[
-            list[str] | None,
+            list[str] ,
             typer.Argument(
                 help=(
                     "Flags to pass to `generate`, using a space as a separator between flags. Accepts booleans, numbers, "
@@ -222,15 +222,15 @@ class Chat:
         ] = None,
         # General settings
         user: Annotated[
-            str | None,
+            str ,
             typer.Option(help="Username to display in chat interface. Defaults to the current user's name."),
         ] = None,
-        system_prompt: Annotated[str | None, typer.Option(help="System prompt.")] = None,
+        system_prompt: Annotated[str , typer.Option(help="System prompt.")] = None,
         save_folder: Annotated[str, typer.Option(help="Folder to save chat history.")] = "./chat_history/",
-        examples_path: Annotated[str | None, typer.Option(help="Path to a yaml file with examples.")] = None,
+        examples_path: Annotated[str , typer.Option(help="Path to a yaml file with examples.")] = None,
         # Generation settings
         generation_config: Annotated[
-            str | None,
+            str ,
             typer.Option(
                 help="Path to a local generation config file or to a HuggingFace repo containing a `generation_config.json` file. Other generation settings passed as CLI arguments will be applied on top of this generation config."
             ),
@@ -479,7 +479,7 @@ class Chat:
                     break
 
 
-def load_generation_config(generation_config: str | None) -> GenerationConfig:
+def load_generation_config(generation_config: str ) -> GenerationConfig:
     if generation_config is None:
         return GenerationConfig()
 
@@ -491,7 +491,7 @@ def load_generation_config(generation_config: str | None) -> GenerationConfig:
         return GenerationConfig.from_pretrained(generation_config)
 
 
-def parse_generate_flags(generate_flags: list[str] | None) -> dict:
+def parse_generate_flags(generate_flags: list[str] ) -> dict:
     """Parses the generate flags from the user input into a dictionary of `generate` kwargs."""
     if generate_flags is None or len(generate_flags) == 0:
         return {}
@@ -545,7 +545,7 @@ def parse_generate_flags(generate_flags: list[str] | None) -> dict:
     return processed_generate_flags
 
 
-def new_chat_history(system_prompt: str | None = None) -> list[dict]:
+def new_chat_history(system_prompt: str  = None) -> list[dict]:
     """Returns a new chat conversation."""
     return [{"role": "system", "content": system_prompt}] if system_prompt else []
 

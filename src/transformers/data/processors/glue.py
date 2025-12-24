@@ -36,7 +36,7 @@ DEPRECATION_WARNING = (
 def glue_convert_examples_to_features(
     examples: list[InputExample],
     tokenizer: PreTrainedTokenizer,
-    max_length: int | None = None,
+    max_length: int  = None,
     task=None,
     label_list=None,
     output_mode=None,
@@ -65,7 +65,7 @@ def glue_convert_examples_to_features(
 def _glue_convert_examples_to_features(
     examples: list[InputExample],
     tokenizer: PreTrainedTokenizer,
-    max_length: int | None = None,
+    max_length: int  = None,
     task=None,
     label_list=None,
     output_mode=None,
@@ -84,7 +84,7 @@ def _glue_convert_examples_to_features(
 
     label_map = {label: i for i, label in enumerate(label_list)}
 
-    def label_from_example(example: InputExample) -> int | float | None:
+    def label_from_example(example: InputExample) -> int | float :
         if example.label is None:
             return None
         if output_mode == "classification":

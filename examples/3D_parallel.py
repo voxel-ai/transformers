@@ -402,7 +402,7 @@ def clip_grad_norm_(
     max_norm: float,
     norm_type: float = 2.0,
     error_if_nonfinite: bool = False,
-    foreach: bool | None = None,
+    foreach: bool  = None,
 ) -> torch.Tensor:
     """
     Clip the gradient norm of an iterable of parameters.

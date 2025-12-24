@@ -79,7 +79,7 @@ class JsonSchemaGeneratorTest(unittest.TestCase):
         self.assertEqual(schema["function"], expected_schema)
 
     def test_optional(self):
-        def fn(x: int | None):
+        def fn(x: int ):
             """
             Test function
 
@@ -173,7 +173,7 @@ class JsonSchemaGeneratorTest(unittest.TestCase):
         self.assertEqual(schema["function"], expected_schema)
 
     def test_multiple_complex_arguments(self):
-        def fn(x: list[int | float], y: int | str | None = None):
+        def fn(x: list[int | float], y: int | str  = None):
             """
             Test function
 
@@ -488,7 +488,7 @@ class JsonSchemaGeneratorTest(unittest.TestCase):
         self.assertEqual(schema["function"], expected_schema)
 
     def test_everything_all_at_once(self):
-        def fn(x: str, y: list[str | int] | None, z: tuple[str | int, str] = (42, "hello")) -> tuple[int, str]:
+        def fn(x: str, y: list[str | int] , z: tuple[str | int, str] = (42, "hello")) -> tuple[int, str]:
             """
             Test function with multiple args, and docstring args that we have to strip out.
 

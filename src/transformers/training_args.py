@@ -116,7 +116,7 @@ def get_int_from_env(env_keys, default):
     return default
 
 
-def get_xla_device_type(device: "torch.device") -> str | None:
+def get_xla_device_type(device: "torch.device") -> str :
     """
     Returns the xla device type (CPU|GPU|TPU) or None if the device is a non-xla device.
     """
@@ -779,7 +779,7 @@ class TrainingArguments:
         "lr_scheduler_kwargs",
     ]
 
-    output_dir: str | None = field(
+    output_dir: str  = field(
         default=None,
         metadata={
             "help": "The output directory where the model predictions and checkpoints will be written. Defaults to 'trainer_output' if not provided."
@@ -809,7 +809,7 @@ class TrainingArguments:
         default=1,
         metadata={"help": "Number of updates steps to accumulate before performing a backward/update pass."},
     )
-    eval_accumulation_steps: int | None = field(
+    eval_accumulation_steps: int  = field(
         default=None,
         metadata={"help": "Number of predictions steps to accumulate before moving the tensors to the CPU."},
     )
@@ -824,7 +824,7 @@ class TrainingArguments:
         },
     )
 
-    torch_empty_cache_steps: int | None = field(
+    torch_empty_cache_steps: int  = field(
         default=None,
         metadata={
             "help": "Number of steps to wait before calling `torch.<device>.empty_cache()`."
@@ -849,7 +849,7 @@ class TrainingArguments:
         default="linear",
         metadata={"help": "The scheduler type to use."},
     )
-    lr_scheduler_kwargs: dict | str | None = field(
+    lr_scheduler_kwargs: dict | str  = field(
         default=None,
         metadata={
             "help": (
@@ -857,7 +857,7 @@ class TrainingArguments:
             )
         },
     )
-    warmup_ratio: float | None = field(
+    warmup_ratio: float  = field(
         default=None,
         metadata={
             "help": "This argument is deprecated and will be removed in v5.2. Use `warmup_steps` instead as it also works with float values."
@@ -893,7 +893,7 @@ class TrainingArguments:
             )
         },
     )
-    logging_dir: str | None = field(
+    logging_dir: str  = field(
         default=None,
         metadata={
             "help": "Deprecated and will be removed in v5.2. Set env var `TENSORBOARD_LOGGING_DIR` instead. TensorBoard log directory."
@@ -927,7 +927,7 @@ class TrainingArguments:
             )
         },
     )
-    save_total_limit: int | None = field(
+    save_total_limit: int  = field(
         default=None,
         metadata={
             "help": (
@@ -990,7 +990,7 @@ class TrainingArguments:
         },
     )
     seed: int = field(default=42, metadata={"help": "Random seed that will be set at the beginning of training."})
-    data_seed: int | None = field(default=None, metadata={"help": "Random seed to be used with data samplers."})
+    data_seed: int  = field(default=None, metadata={"help": "Random seed to be used with data samplers."})
     bf16: bool = field(
         default=False,
         metadata={
@@ -1018,7 +1018,7 @@ class TrainingArguments:
         default=False,
         metadata={"help": "Whether to use full float16 evaluation instead of 32-bit"},
     )
-    tf32: bool | None = field(
+    tf32: bool  = field(
         default=None,
         metadata={
             "help": (
@@ -1033,7 +1033,7 @@ class TrainingArguments:
             "help": "When using torch.distributed.launch (Deprecated), it will pass `local_rank` in the script, so we need this for the parser. To get the local rank, prefer using the property `local_process_index`"
         },
     )
-    ddp_backend: str | None = field(
+    ddp_backend: str  = field(
         default=None,
         metadata={
             "help": "The backend to be used for distributed training",
@@ -1054,7 +1054,7 @@ class TrainingArguments:
     dataloader_drop_last: bool = field(
         default=False, metadata={"help": "Drop the last incomplete batch if it is not divisible by the batch size."}
     )
-    eval_steps: float | None = field(
+    eval_steps: float  = field(
         default=None,
         metadata={
             "help": (
@@ -1072,7 +1072,7 @@ class TrainingArguments:
             )
         },
     )
-    dataloader_prefetch_factor: int | None = field(
+    dataloader_prefetch_factor: int  = field(
         default=None,
         metadata={
             "help": (
@@ -1082,7 +1082,7 @@ class TrainingArguments:
         },
     )
 
-    run_name: str | None = field(
+    run_name: str  = field(
         default=None,
         metadata={
             "help": (
@@ -1091,14 +1091,14 @@ class TrainingArguments:
             )
         },
     )
-    disable_tqdm: bool | None = field(
+    disable_tqdm: bool  = field(
         default=None, metadata={"help": "Whether or not to disable the tqdm progress bars."}
     )
 
     remove_unused_columns: bool = field(
         default=True, metadata={"help": "Remove columns not required by the model when using an nlp.Dataset."}
     )
-    label_names: list[str] | None = field(
+    label_names: list[str]  = field(
         default=None, metadata={"help": "The list of keys in your dictionary of inputs that correspond to the labels."}
     )
     load_best_model_at_end: bool = field(
@@ -1110,10 +1110,10 @@ class TrainingArguments:
             )
         },
     )
-    metric_for_best_model: str | None = field(
+    metric_for_best_model: str  = field(
         default=None, metadata={"help": "The metric to use to compare two different models."}
     )
-    greater_is_better: bool | None = field(
+    greater_is_better: bool  = field(
         default=None, metadata={"help": "Whether the `metric_for_best_model` should be maximized or not."}
     )
     ignore_data_skip: bool = field(
@@ -1125,7 +1125,7 @@ class TrainingArguments:
             )
         },
     )
-    fsdp: list[FSDPOption] | str | None = field(
+    fsdp: list[FSDPOption] | str  = field(
         default=None,
         metadata={
             "help": (
@@ -1137,7 +1137,7 @@ class TrainingArguments:
             ),
         },
     )
-    fsdp_config: dict[str, Any] | str | None = field(
+    fsdp_config: dict[str, Any] | str  = field(
         default=None,
         metadata={
             "help": (
@@ -1146,7 +1146,7 @@ class TrainingArguments:
             )
         },
     )
-    accelerator_config: dict | str | None = field(
+    accelerator_config: dict | str  = field(
         default=None,
         metadata={
             "help": (
@@ -1155,11 +1155,11 @@ class TrainingArguments:
             )
         },
     )
-    parallelism_config: ParallelismConfig | None = field(
+    parallelism_config: ParallelismConfig  = field(
         default=None,
         metadata={"help": ("Parallelism configuration for the training run. Requires Accelerate `1.12.0`")},
     )
-    deepspeed: dict | str | None = field(
+    deepspeed: dict | str  = field(
         default=None,
         metadata={
             "help": (
@@ -1182,7 +1182,7 @@ class TrainingArguments:
         default=default_optim,
         metadata={"help": "The optimizer to use."},
     )
-    optim_args: str | None = field(default=None, metadata={"help": "Optional arguments to supply to optimizer."})
+    optim_args: str  = field(default=None, metadata={"help": "Optional arguments to supply to optimizer."})
     group_by_length: bool = field(
         default=False,
         metadata={"help": "Whether or not to group samples of roughly the same length together when batching."},
@@ -1198,7 +1198,7 @@ class TrainingArguments:
         default="huggingface",
         metadata={"help": "The name of the project to use for logging. Currenly, only used by Trackio."},
     )
-    trackio_space_id: str | None = field(
+    trackio_space_id: str  = field(
         default="trackio",
         metadata={
             "help": "The Hugging Face Space ID to deploy to when using Trackio. Should be a complete Space name like "
@@ -1208,7 +1208,7 @@ class TrainingArguments:
             "default is to create private Spaces."
         },
     )
-    ddp_find_unused_parameters: bool | None = field(
+    ddp_find_unused_parameters: bool  = field(
         default=None,
         metadata={
             "help": (
@@ -1217,7 +1217,7 @@ class TrainingArguments:
             )
         },
     )
-    ddp_bucket_cap_mb: int | None = field(
+    ddp_bucket_cap_mb: int  = field(
         default=None,
         metadata={
             "help": (
@@ -1226,7 +1226,7 @@ class TrainingArguments:
             )
         },
     )
-    ddp_broadcast_buffers: bool | None = field(
+    ddp_broadcast_buffers: bool  = field(
         default=None,
         metadata={
             "help": (
@@ -1250,19 +1250,19 @@ class TrainingArguments:
     push_to_hub: bool = field(
         default=False, metadata={"help": "Whether or not to upload the trained model to the model hub after training."}
     )
-    resume_from_checkpoint: str | None = field(
+    resume_from_checkpoint: str  = field(
         default=None,
         metadata={"help": "The path to a folder with a valid checkpoint for your model."},
     )
-    hub_model_id: str | None = field(
+    hub_model_id: str  = field(
         default=None, metadata={"help": "The name of the repository to keep in sync with the local `output_dir`."}
     )
     hub_strategy: HubStrategy | str = field(
         default="every_save",
         metadata={"help": "The hub strategy to use when `--push_to_hub` is activated."},
     )
-    hub_token: str | None = field(default=None, metadata={"help": "The token to use to push to the Model Hub."})
-    hub_private_repo: bool | None = field(
+    hub_token: str  = field(default=None, metadata={"help": "The token to use to push to the Model Hub."})
+    hub_private_repo: bool  = field(
         default=None,
         metadata={
             "help": "Whether to make the repo private. If `None` (default), the repo will be public unless the "
@@ -1275,7 +1275,7 @@ class TrainingArguments:
         default=False,
         metadata={"help": "Unless `True`, the Trainer will skip pushes if the previous one wasn't finished yet."},
     )
-    hub_revision: str | None = field(
+    hub_revision: str  = field(
         default=None,
         metadata={
             "help": "The revision to use when pushing to the Hub. Can be a branch name, a tag, or a commit hash."
@@ -1287,7 +1287,7 @@ class TrainingArguments:
             "help": "If True, use gradient checkpointing to save memory at the expense of slower backward pass."
         },
     )
-    gradient_checkpointing_kwargs: dict[str, Any] | str | None = field(
+    gradient_checkpointing_kwargs: dict[str, Any] | str  = field(
         default=None,
         metadata={
             "help": "Gradient checkpointing key word arguments such as `use_reentrant`. Will be passed to `torch.utils.checkpoint.checkpoint` through `model.gradient_checkpointing_enable`."
@@ -1333,13 +1333,13 @@ class TrainingArguments:
     torch_compile: bool = field(
         default=False, metadata={"help": "If set to `True`, the model will be wrapped in `torch.compile`."}
     )
-    torch_compile_backend: str | None = field(
+    torch_compile_backend: str  = field(
         default=None,
         metadata={
             "help": "Which backend to use with `torch.compile`, passing one will trigger a model compilation.",
         },
     )
-    torch_compile_mode: str | None = field(
+    torch_compile_mode: str  = field(
         default=None,
         metadata={
             "help": "Which mode to use with `torch.compile`, passing one will trigger a model compilation.",
@@ -1355,7 +1355,7 @@ class TrainingArguments:
         },
     )
 
-    neftune_noise_alpha: float | None = field(
+    neftune_noise_alpha: float  = field(
         default=None,
         metadata={
             "help": "Activates neftune noise embeddings into the model. NEFTune has been proven to drastically improve model performances for instruction fine-tuning. Check out the original paper here: https://huggingface.co/papers/2310.05914 and the original code here: https://github.com/neelsjain/NEFTune. Only supported for `PreTrainedModel` and `PeftModel` classes."
@@ -1386,7 +1386,7 @@ class TrainingArguments:
         metadata={"help": "Whether or not to enable the Liger Kernel for model training."},
     )
 
-    liger_kernel_config: dict[str, bool] | None = field(
+    liger_kernel_config: dict[str, bool]  = field(
         default=None,
         metadata={
             "help": (
@@ -2199,8 +2199,8 @@ class TrainingArguments:
         strategy: str | IntervalStrategy = "no",
         steps: int = 500,
         batch_size: int = 8,
-        accumulation_steps: int | None = None,
-        delay: float | None = None,
+        accumulation_steps: int  = None,
+        delay: float  = None,
         loss_only: bool = False,
     ):
         """
@@ -2291,7 +2291,7 @@ class TrainingArguments:
         self,
         strategy: str | IntervalStrategy = "steps",
         steps: int = 500,
-        total_limit: int | None = None,
+        total_limit: int  = None,
         on_each_node: bool = False,
     ):
         """
@@ -2415,10 +2415,10 @@ class TrainingArguments:
         self,
         model_id: str,
         strategy: str | HubStrategy = "every_save",
-        token: str | None = None,
-        private_repo: bool | None = None,
+        token: str  = None,
+        private_repo: bool  = None,
         always_push: bool = False,
-        revision: str | None = None,
+        revision: str  = None,
     ):
         """
         A method that regroups all arguments linked to synchronizing checkpoints with the Hub.
@@ -2493,7 +2493,7 @@ class TrainingArguments:
         beta1: float = 0.9,
         beta2: float = 0.999,
         epsilon: float = 1e-8,
-        args: str | None = None,
+        args: str  = None,
     ):
         """
         A method that regroups all arguments linked to the optimizer and its hyperparameters.
@@ -2542,7 +2542,7 @@ class TrainingArguments:
         num_epochs: float = 3.0,
         max_steps: int = -1,
         warmup_steps: float = 0,
-        warmup_ratio: float | None = None,
+        warmup_ratio: float  = None,
     ):
         """
         A method that regroups all arguments linked to the learning rate scheduler and its hyperparameters.
@@ -2590,10 +2590,10 @@ class TrainingArguments:
         num_workers: int = 0,
         pin_memory: bool = True,
         persistent_workers: bool = False,
-        prefetch_factor: int | None = None,
+        prefetch_factor: int  = None,
         auto_find_batch_size: bool = False,
         ignore_data_skip: bool = False,
-        sampler_seed: int | None = None,
+        sampler_seed: int  = None,
     ):
         """
         A method that regroups all arguments linked to the dataloaders creation.

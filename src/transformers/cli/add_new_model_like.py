@@ -89,7 +89,7 @@ COPYRIGHT = f"""
 
 def add_new_model_like(
     repo_path: Annotated[
-        str | None, typer.Argument(help="When not using an editable install, the path to the Transformers repo.")
+        str , typer.Argument(help="When not using an editable install, the path to the Transformers repo.")
     ] = None,
 ):
     """
@@ -615,9 +615,9 @@ def _add_new_model_like_internal(
 
 def get_user_field(
     question: str,
-    default_value: str | None = None,
-    convert_to: Callable | None = None,
-    fallback_message: str | None = None,
+    default_value: str  = None,
+    convert_to: Callable  = None,
+    fallback_message: str  = None,
 ) -> Any:
     """
     A utility function that asks a question to the user to get an answer, potentially looping until it gets a valid

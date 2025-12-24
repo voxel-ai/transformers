@@ -201,7 +201,7 @@ def apply_chunking_to_forward(
     return forward_fn(*input_tensors)
 
 
-def meshgrid(*tensors: torch.Tensor | list[torch.Tensor], indexing: str | None = None) -> tuple[torch.Tensor, ...]:
+def meshgrid(*tensors: torch.Tensor | list[torch.Tensor], indexing: str  = None) -> tuple[torch.Tensor, ...]:
     """
     Wrapper around torch.meshgrid to avoid warning messages about the introduced `indexing` argument.
 

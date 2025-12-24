@@ -161,8 +161,8 @@ class EvalPrediction:
         self,
         predictions: np.ndarray | tuple[np.ndarray],
         label_ids: np.ndarray | tuple[np.ndarray],
-        inputs: np.ndarray | tuple[np.ndarray] | None = None,
-        losses: np.ndarray | tuple[np.ndarray] | None = None,
+        inputs: np.ndarray | tuple[np.ndarray]  = None,
+        losses: np.ndarray | tuple[np.ndarray]  = None,
     ):
         self.predictions = predictions
         self.label_ids = label_ids
@@ -185,15 +185,15 @@ class EvalPrediction:
 
 class EvalLoopOutput(NamedTuple):
     predictions: np.ndarray | tuple[np.ndarray]
-    label_ids: np.ndarray | tuple[np.ndarray] | None
-    metrics: dict[str, float] | None
-    num_samples: int | None
+    label_ids: np.ndarray | tuple[np.ndarray] 
+    metrics: dict[str, float] 
+    num_samples: int 
 
 
 class PredictionOutput(NamedTuple):
     predictions: np.ndarray | tuple[np.ndarray]
-    label_ids: np.ndarray | tuple[np.ndarray] | None
-    metrics: dict[str, float] | None
+    label_ids: np.ndarray | tuple[np.ndarray] 
+    metrics: dict[str, float] 
 
 
 class TrainOutput(NamedTuple):
@@ -257,7 +257,7 @@ class BestRun(NamedTuple):
     run_id: str
     objective: float | list[float]
     hyperparameters: dict[str, Any]
-    run_summary: Any | None = None
+    run_summary: Any  = None
 
 
 def default_compute_objective(metrics: dict[str, float]) -> float:
@@ -763,7 +763,7 @@ def number_of_arguments(func):
 
 
 def find_executable_batch_size(
-    function: Callable | None = None, starting_batch_size: int = 128, auto_find_batch_size: bool = False
+    function: Callable  = None, starting_batch_size: int = 128, auto_find_batch_size: bool = False
 ):
     """
     Args:
@@ -811,8 +811,8 @@ class RemoveColumnsCollator:
         data_collator,
         signature_columns,
         logger=None,
-        model_name: str | None = None,
-        description: str | None = None,
+        model_name: str  = None,
+        description: str  = None,
     ):
         self.data_collator = data_collator
         self.signature_columns = signature_columns

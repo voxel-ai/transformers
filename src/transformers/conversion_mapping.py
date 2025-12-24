@@ -234,8 +234,8 @@ VLMS = [
 
 def get_model_conversion_mapping(
     model: PreTrainedModel,
-    key_mapping: dict[str, str] | None = None,
-    hf_quantizer: HfQuantizer | None = None,
+    key_mapping: dict[str, str]  = None,
+    hf_quantizer: HfQuantizer  = None,
     add_legacy: bool = True,
 ) -> list[WeightConverter | WeightRenaming]:
     """

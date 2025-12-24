@@ -86,10 +86,10 @@ class GenerationOutput:
     prompt_ids: list[int] = field(default_factory=list)
     generated_tokens: list[int] = field(default_factory=list)
     logprobs: list[float] = field(default_factory=list)
-    error: str | None = None
+    error: str  = None
     status: RequestStatus = RequestStatus.PENDING
     created_time: float = field(default_factory=time.perf_counter)
-    timestamps: list[float] | None = None  # Timestamps of the generated tokens
+    timestamps: list[float]  = None  # Timestamps of the generated tokens
 
     def is_finished(self) -> bool:
         return self.status == RequestStatus.FINISHED
@@ -101,8 +101,8 @@ class RequestState:
 
     Attributes:
         request_id (str): The ID of the generation request.
-        full_prompt_ids (list[int] | None): The tokens IDs of the full prompt.
-        prompt_ids (list[int] | None): The tokens IDs currently being processed.
+        full_prompt_ids (list[int] ): The tokens IDs of the full prompt.
+        prompt_ids (list[int] ): The tokens IDs currently being processed.
         remaining_prompt_ids (list[int]): The tokens IDs remaining to be processed (for split requests).
         static_outputs (list[int]): The generated tokens.
         allocated_blocks (int): The number of blocks allocated to the request.
@@ -122,7 +122,7 @@ class RequestState:
     # Optional fields
     record_timestamps: bool = False  # Whether to record timestamps for the generated tokens
     # Internal fields
-    tokens_to_process: list[int] | None = None  # Tokens IDs currently being processed
+    tokens_to_process: list[int]  = None  # Tokens IDs currently being processed
     remaining_prefill_tokens: list[int] = field(default_factory=list)  # For split requests, prefill left to process
     generated_tokens: list[int] = field(default_factory=list)  # Generated tokens
     allocated_blocks: int = 0  # Number of blocks allocated to the request
@@ -132,7 +132,7 @@ class RequestState:
     eos_token_id: int = -1  # ID of the end-of-sequence token
     streaming: bool = False  # Whether to stream tokens as they're generated
     created_time: float = field(default_factory=time.perf_counter)  # Time the request was created
-    error: str | None = None  # Error message if the request failed
+    error: str  = None  # Error message if the request failed
     lifespan: tuple[float, float] = (-1, -1)  # (time request was no longer pending, time request finished)
     _timestamps: list[float] = field(default_factory=list)  # Timestamps of the generated tokens
 
@@ -150,7 +150,7 @@ class RequestState:
         self._status = value
 
     @property
-    def timestamps(self) -> list[float] | None:
+    def timestamps(self) -> list[float] :
         return self._timestamps if self.record_timestamps else None
 
     def log_end_of_request(self):

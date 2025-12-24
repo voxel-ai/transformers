@@ -87,8 +87,8 @@ class ContinuousBatchingNonGenerationTest(unittest.TestCase):
     )
     def test_group_layers(
         self,
-        layer_types_str: str | None,
-        sliding_window: int | None,
+        layer_types_str: str ,
+        sliding_window: int ,
         expected_groups: str,
     ) -> None:
         """Test the layer grouping algorithm of the hybrid allocator."""

@@ -397,7 +397,7 @@ class PreTrainedConfig(PushToHubMixin, RotaryEmbeddingConfigMixin):
         return self._attn_implementation_internal
 
     @_attn_implementation.setter
-    def _attn_implementation(self, value: str | dict | None):
+    def _attn_implementation(self, value: str | dict ):
         """We set it recursively on the sub-configs as well"""
         # Set if for current config
         current_attn = getattr(self, "_attn_implementation", None)
@@ -493,10 +493,10 @@ class PreTrainedConfig(PushToHubMixin, RotaryEmbeddingConfigMixin):
     def from_pretrained(
         cls: type[SpecificPreTrainedConfigType],
         pretrained_model_name_or_path: str | os.PathLike,
-        cache_dir: str | os.PathLike | None = None,
+        cache_dir: str | os.PathLike  = None,
         force_download: bool = False,
         local_files_only: bool = False,
-        token: str | bool | None = None,
+        token: str | bool  = None,
         revision: str = "main",
         **kwargs,
     ) -> SpecificPreTrainedConfigType:

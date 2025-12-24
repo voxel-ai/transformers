@@ -146,7 +146,7 @@ BATCH_SIZE = 16
 MAX_LENGTH = 4096
 
 
-def _normalize(string: str | None) -> str:
+def _normalize(string: str ) -> str:
     """
     Normalize a string by removing all non-alphanumeric characters and converting to lowercase.
 
@@ -201,7 +201,7 @@ def _leading_symbol_prefix(name: str) -> str:
     return match.group(1) if match else ""
 
 
-def _sanitize_for_embedding(code: str, model_hint: str | None, symbol_hint: str | None) -> str:
+def _sanitize_for_embedding(code: str, model_hint: str , symbol_hint: str ) -> str:
     """
     Sanitize code for embedding by replacing model-specific identifiers with generic placeholder.
 
@@ -257,7 +257,7 @@ class CodeSimilarityAnalyzer:
         self.model = AutoModel.from_pretrained(EMBEDDING_MODEL, torch_dtype="auto", device_map="auto").eval()
 
         self.device = self.model.device
-        self.index_dir: Path | None = None
+        self.index_dir: Path  = None
 
     # ---------- HUB IO ----------
 
@@ -304,7 +304,7 @@ class CodeSimilarityAnalyzer:
     # ---------- parsing & encoding ----------
 
     def _extract_definitions(
-        self, file_path: Path, relative_to: Path | None = None, model_hint: str | None = None
+        self, file_path: Path, relative_to: Path  = None, model_hint: str  = None
     ) -> tuple[dict[str, str], dict[str, str], dict[str, list[str]], dict[str, str]]:
         """
         Extract class and function definitions from a Python file.
@@ -351,14 +351,14 @@ class CodeSimilarityAnalyzer:
                         definitions_kind[identifier] = "function"
         return definitions_raw, definitions_sanitized, definitions_tokens, definitions_kind
 
-    def _infer_model_from_relative_path(self, relative_path: Path) -> str | None:
+    def _infer_model_from_relative_path(self, relative_path: Path) -> str :
         try:
             relative = relative_path.resolve().relative_to(self.models_root.resolve())
             return relative.parts[0]
         except Exception:
             return None
 
-    def _infer_query_model_name(self, modeling_file: Path) -> str | None:
+    def _infer_query_model_name(self, modeling_file: Path) -> str :
         model = self._infer_model_from_relative_path(modeling_file)
         if model:
             return model
@@ -614,7 +614,7 @@ def build_date_data() -> dict[str, str]:
     return result
 
 
-def _format_table(headers: list[str], rows: list[tuple[str, ...] | None], row_styles: list[str] | None = None) -> str:
+def _format_table(headers: list[str], rows: list[tuple[str, ...] ], row_styles: list[str]  = None) -> str:
     if not rows:
         return f"{ANSI_ROW}(no matches){ANSI_RESET}"
 
@@ -646,7 +646,7 @@ def _format_table(headers: list[str], rows: list[tuple[str, ...] | None], row_st
     return "\n".join([f"{ANSI_SECTION}{header_line}{ANSI_RESET}", divider] + styled_rows)
 
 
-def _parse_release_date(value: str) -> datetime | None:
+def _parse_release_date(value: str) -> datetime :
     """Return a datetime parsed from YYYY-MM-DD strings, otherwise None."""
     try:
         return datetime.strptime(value, "%Y-%m-%d")
@@ -736,7 +736,7 @@ def main():
                 continue
             aggregate_scores[relative_path] = aggregate_scores.get(relative_path, 0.0) + score
 
-    best_candidate_path: str | None = None
+    best_candidate_path: str  = None
     if aggregate_scores:
         best_candidate_path = max(aggregate_scores.items(), key=lambda item: item[1])[0]
         best_model = Path(best_candidate_path).parts[0] if Path(best_candidate_path).parts else "?"
@@ -773,7 +773,7 @@ def main():
         if include_metric_column:
             headers = ["Symbol", "Metric", "Path", "Score", "Release"]
 
-        table_rows: list[tuple[str, ...] | None] = []
+        table_rows: list[tuple[str, ...] ] = []
         row_styles: list[str] = []
         has_metric_rows = False
 

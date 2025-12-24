@@ -102,8 +102,8 @@ class DistributionOutput:
     def distribution(
         self,
         distr_args,
-        loc: torch.Tensor | None = None,
-        scale: torch.Tensor | None = None,
+        loc: torch.Tensor  = None,
+        scale: torch.Tensor  = None,
     ) -> Distribution:
         distr = self._base_distribution(distr_args)
         if loc is None and scale is None:
@@ -214,7 +214,7 @@ class NegativeBinomialOutput(DistributionOutput):
     # transformation since negative binomial should return integers. Instead
     # we scale the parameters.
     def distribution(
-        self, distr_args, loc: torch.Tensor | None = None, scale: torch.Tensor | None = None
+        self, distr_args, loc: torch.Tensor  = None, scale: torch.Tensor  = None
     ) -> Distribution:
         total_count, logits = distr_args
 
