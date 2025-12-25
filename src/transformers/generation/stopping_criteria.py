@@ -238,7 +238,7 @@ class StopStringCriteria(StoppingCriteria):
     ```
     """
 
-    def __init__(self, tokenizer: PreTrainedTokenizerBase, stop_strings: str | list[str]):
+    def __init__(self, tokenizer: PreTrainedTokenizerBase, stop_strings):
         if isinstance(stop_strings, str):
             stop_strings = [stop_strings]
         self.stop_strings: tuple[str, ...] = tuple(stop_strings)
@@ -458,7 +458,7 @@ class EosTokenCriteria(StoppingCriteria):
             The id(s) of the *end-of-sequence* token.
     """
 
-    def __init__(self, eos_token_id: int | list[int] | torch.Tensor):
+    def __init__(self, eos_token_id):
         if not isinstance(eos_token_id, torch.Tensor):
             if isinstance(eos_token_id, int):
                 eos_token_id = [eos_token_id]

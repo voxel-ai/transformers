@@ -40,7 +40,7 @@ logger = logging.get_logger(__name__)
 
 import torch
 from torch.types import _dtype
-
+_is_torch_available = True
 from ..model_debugging_utils import model_addition_debugger_context
 
 # required for @can_return_tuple decorator to work with torchdynamo

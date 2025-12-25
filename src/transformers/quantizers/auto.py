@@ -159,7 +159,7 @@ class AutoHfQuantizer:
     """
 
     @classmethod
-    def from_config(cls, quantization_config: QuantizationConfigMixin | dict, **kwargs):
+    def from_config(cls, quantization_config, **kwargs):
         # Convert it to a QuantizationConfig if the q_config is a dict
         if isinstance(quantization_config, dict):
             quantization_config = AutoQuantizationConfig.from_dict(quantization_config)
@@ -191,7 +191,7 @@ class AutoHfQuantizer:
     @classmethod
     def merge_quantization_configs(
         cls,
-        quantization_config: dict | QuantizationConfigMixin,
+        quantization_config,
         quantization_config_from_args: QuantizationConfigMixin ,
     ):
         """

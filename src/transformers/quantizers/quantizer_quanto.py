@@ -86,7 +86,7 @@ class QuantoHfQuantizer(HfQuantizer):
         else:
             return False
 
-    def adjust_max_memory(self, max_memory: dict[str, int | str]) -> dict[str, int | str]:
+    def adjust_max_memory(self, max_memory):
         max_memory = {key: val * 0.90 for key, val in max_memory.items()}
         return max_memory
 

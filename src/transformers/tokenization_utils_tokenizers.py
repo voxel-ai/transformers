@@ -596,7 +596,7 @@ class TokenizersBackend(PreTrainedTokenizerBase):
     def _convert_id_to_token(self, index: int) -> str :
         return self._tokenizer.id_to_token(int(index))
 
-    def _add_tokens(self, new_tokens: list[str | AddedToken], special_tokens=False) -> int:
+    def _add_tokens(self, new_tokens, special_tokens=False) -> int:
         if special_tokens:
             return self._tokenizer.add_special_tokens(new_tokens)
 
@@ -623,7 +623,7 @@ class TokenizersBackend(PreTrainedTokenizerBase):
         """
         return self._tokenizer.num_special_tokens_to_add(pair)
 
-    def convert_ids_to_tokens(self, ids: int | list[int], skip_special_tokens: bool = False) -> str | list[str]:
+    def convert_ids_to_tokens(self, ids, skip_special_tokens: bool = False):
         """
         Converts a single index or a sequence of indices in a token or a sequence of tokens, using the vocabulary and
         added tokens.
@@ -890,7 +890,7 @@ class TokenizersBackend(PreTrainedTokenizerBase):
 
     def _decode(
         self,
-        token_ids: int | list[int],
+        token_ids,
         skip_special_tokens: bool = False,
         clean_up_tokenization_spaces: bool  = None,
         **kwargs,
@@ -904,7 +904,7 @@ class TokenizersBackend(PreTrainedTokenizerBase):
 
     def _save_pretrained(
         self,
-        save_directory: str | os.PathLike,
+        save_directory,
         file_names: tuple[str, ...],
         legacy_format: bool  = None,
         filename_prefix: str  = None,

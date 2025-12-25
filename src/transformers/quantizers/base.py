@@ -111,7 +111,7 @@ class HfQuantizer(ABC):
     def param_element_size(self, model: "PreTrainedModel", param_name: str, param: "torch.Tensor") -> float:
         return param.element_size()
 
-    def adjust_max_memory(self, max_memory: dict[str, int | str]) -> dict[str, int | str]:
+    def adjust_max_memory(self, max_memory):
         """adjust max_memory argument for infer_auto_device_map() if extra memory is needed for quantization"""
         return max_memory
 

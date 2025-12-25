@@ -278,7 +278,7 @@ class PermuteForRope(ConversionOps):
         return output
 
 
-@dataclass(slots=True)
+@dataclass
 class WeightTransform:
     source_patterns: Union[str, list[str]] = field(init=True)
     target_patterns: Union[str, list[str]] = field(init=True)
@@ -400,7 +400,7 @@ class WeightTransform:
         return collected_tensors
 
 
-@dataclass(slots=True)
+@dataclass
 class WeightRenaming(WeightTransform):
     # Special case of WeightTransform that only renames keys without any conversion.
 
@@ -439,7 +439,7 @@ class WeightRenaming(WeightTransform):
         return collected_tensors, conversion_errors
 
 
-@dataclass(slots=True)
+@dataclass
 class WeightConverter(WeightTransform):
     operations: list[ConversionOps] = field(default_factory=list, repr=False)
 

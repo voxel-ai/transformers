@@ -159,7 +159,7 @@ class TorchAoHfQuantizer(HfQuantizer):
 
         return super().param_element_size(model, param_name, param)
 
-    def adjust_max_memory(self, max_memory: dict[str, int | str]) -> dict[str, int | str]:
+    def adjust_max_memory(self, max_memory):
         # need more space for the quantization parameters (e.g. scale). Tested with int4 wo and group size = 128
         max_memory = {key: val * 0.9 for key, val in max_memory.items()}
         return max_memory

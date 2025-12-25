@@ -83,7 +83,7 @@ try:
                 )
             return lambda func: func
 
-    _KERNEL_MAPPING: dict[str, dict[Device | str, LayerRepository | dict[Mode, LayerRepository]]] = {
+    _KERNEL_MAPPING= {
         "MultiScaleDeformableAttention": {
             "cuda": LayerRepository(
                 repo_id="kernels-community/deformable-detr",
@@ -155,7 +155,7 @@ try:
         },
         "FastGELU": {
             "cuda": {
-                Mode.INFERENCE | Mode.TORCH_COMPILE: LayerRepository(
+                Union[Mode.INFERENCE, Mode.TORCH_COMPILE]: LayerRepository(
                     repo_id="kernels-community/activation",
                     layer_name="FastGELU",
                     version=">=0.0.4,<0.1.0",
@@ -164,7 +164,7 @@ try:
         },
         "QuickGELU": {
             "cuda": {
-                Mode.INFERENCE | Mode.TORCH_COMPILE: LayerRepository(
+                Union[Mode.INFERENCE, Mode.TORCH_COMPILE]: LayerRepository(
                     repo_id="kernels-community/activation",
                     layer_name="QuickGELU",
                     version=">=0.0.4,<0.1.0",
@@ -173,7 +173,7 @@ try:
         },
         "NewGELU": {
             "cuda": {
-                Mode.INFERENCE | Mode.TORCH_COMPILE: LayerRepository(
+                Union[Mode.INFERENCE, Mode.TORCH_COMPILE]: LayerRepository(
                     repo_id="kernels-community/activation",
                     layer_name="NewGELU",
                     version=">=0.0.4,<0.1.0",
@@ -182,21 +182,21 @@ try:
         },
         "SiLU": {
             "cuda": {
-                Mode.INFERENCE | Mode.TORCH_COMPILE: LayerRepository(
+                Union[Mode.INFERENCE, Mode.TORCH_COMPILE]: LayerRepository(
                     repo_id="kernels-community/activation", layer_name="Silu", version=">=0.1.0"
                 )
             }
         },
         "GeLU": {
             "cuda": {
-                Mode.INFERENCE | Mode.TORCH_COMPILE: LayerRepository(
+                Union[Mode.INFERENCE, Mode.TORCH_COMPILE]: LayerRepository(
                     repo_id="kernels-community/activation", layer_name="Gelu", version=">=0.1.0"
                 )
             }
         },
         "GeluTanh": {
             "cuda": {
-                Mode.INFERENCE | Mode.TORCH_COMPILE: LayerRepository(
+                Union[Mode.INFERENCE, Mode.TORCH_COMPILE]: LayerRepository(
                     repo_id="kernels-community/activation", layer_name="GeluTanh", version=">=0.1.0"
                 )
             }
@@ -398,7 +398,7 @@ def get_kernel(kernel_name: str, revision: str  = None, version: str  = None) ->
         raise ImportError("kernels is not installed, please install it with `pip install kernels`")
 
 
-def use_kernelized_func(module_names: list[Callable] | Callable):
+def use_kernelized_func(module_names):
     """
     This decorator attaches the target function as an attribute of the module.
     The function must already be decorated with @use_kernel_func_from_hub

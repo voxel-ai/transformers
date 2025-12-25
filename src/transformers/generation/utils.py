@@ -433,7 +433,7 @@ class GenerationMixin(ContinuousMixin):
 
     def load_custom_generate(
         self,
-        pretrained_model_name_or_path: str | os.PathLike  = None,
+        pretrained_model_name_or_path= None,
         trust_remote_code: bool  = None,
         **kwargs,
     ) -> Callable:
@@ -1402,9 +1402,9 @@ class GenerationMixin(ContinuousMixin):
 
     def _merge_criteria_processor_list(
         self,
-        default_list: LogitsProcessorList | StoppingCriteriaList,
-        custom_list: LogitsProcessorList | StoppingCriteriaList,
-    ) -> LogitsProcessorList | StoppingCriteriaList:
+        default_list,
+        custom_list,
+    ):
         """
         Merge user-defined processors/criteria with the ones instantiated inside `generate`. In case the same
         processor/criteria is present on both lists, use the user-defined one.
@@ -2045,7 +2045,7 @@ class GenerationMixin(ContinuousMixin):
         self,
         generation_config: GenerationConfig,
         kwargs_has_attention_mask: bool  = None,
-        device: torch.device | str  = None,
+        device  = None,
     ):
         """
         Prepares the special tokens for generation, overwriting the generation config with their processed versions
@@ -2245,9 +2245,9 @@ class GenerationMixin(ContinuousMixin):
         streamer: Optional["BaseStreamer"] = None,
         negative_prompt_ids: torch.Tensor  = None,
         negative_prompt_attention_mask: torch.Tensor  = None,
-        custom_generate: str | Callable  = None,
+        custom_generate  = None,
         **kwargs,
-    ) -> GenerateOutput | torch.LongTensor:
+    ) :
         r"""
 
         Generates sequences of token ids for models with a language modeling head.
@@ -2753,7 +2753,7 @@ class GenerationMixin(ContinuousMixin):
         synced_gpus: bool = False,
         streamer: Optional["BaseStreamer"] = None,
         **model_kwargs,
-    ) -> GenerateNonBeamOutput | torch.LongTensor:
+    ) :
         r"""
         Generates sequences of token ids for models with a language modeling head using **multinomial sampling** and
         can be used for text-decoder, text-to-text, speech-to-text, and vision-to-text models.
@@ -2962,7 +2962,7 @@ class GenerationMixin(ContinuousMixin):
         cur_len: int,
         max_length: int,
         decoder_prompt_len: int,
-        early_stopping: bool | str,
+        early_stopping,
         length_penalty: float,
     ):
         """
@@ -3005,7 +3005,7 @@ class GenerationMixin(ContinuousMixin):
         is_early_stop_heuristic_unsatisfied: torch.Tensor,
         is_sent_finished: torch.Tensor,
         next_token_hits_stopping_criteria: torch.Tensor,
-        early_stopping: bool | str,
+        early_stopping,
     ):
         """
         Beam Search stopping condition -- halts the generation loop if any of these conditions becomes False
@@ -3115,7 +3115,7 @@ class GenerationMixin(ContinuousMixin):
         cur_len: int,
         decoder_prompt_len: int,
         length_penalty: float,
-        early_stopping: bool | str,
+        early_stopping,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Updates the finished beams if (and only if) there are new completed sequences that have a higher score than
@@ -3162,7 +3162,7 @@ class GenerationMixin(ContinuousMixin):
         generation_config: GenerationConfig,
         synced_gpus: bool = False,
         **model_kwargs,
-    ) -> GenerateBeamOutput | torch.LongTensor:
+    ) :
         r"""
         Generates sequences of token ids for models with a language modeling head using **beam search decoding** and
         can be used for text-decoder, text-to-text, speech-to-text, and vision-to-text models.
@@ -3508,7 +3508,7 @@ class GenerationMixin(ContinuousMixin):
         assistant_tokenizer: Optional["PreTrainedTokenizerBase"] = None,
         tokenizer: Optional["PreTrainedTokenizerBase"] = None,
         **model_kwargs,
-    ) -> GenerateNonBeamOutput | torch.LongTensor:
+    ) :
         r"""
         Generates sequences of token ids for models with a language modeling head using **greedy decoding** or
         **sample** (depending on `do_sample`), assisted by candidate sequences. Assisted generation is an example of a

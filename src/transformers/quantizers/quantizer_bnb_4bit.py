@@ -92,7 +92,7 @@ class Bnb4BitHfQuantizer(HfQuantizer):
         module, name = get_module_from_name(model, param_name)
         return isinstance(module, bnb.nn.Linear4bit) and name != "bias"
 
-    def adjust_max_memory(self, max_memory: dict[str, int | str]) -> dict[str, int | str]:
+    def adjust_max_memory(self, max_memory):
         # need more space for buffers that are created during quantization
         max_memory = {key: val * 0.90 for key, val in max_memory.items()}
         return max_memory

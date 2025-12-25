@@ -163,7 +163,7 @@ def init_on_device(device: "torch.device", include_buffers: bool = False):
             setattr(torch, torch_function_name, old_torch_function)
 
 
-def check_and_set_device_map(device_map: "torch.device | int | str | dict ") -> dict | str :
+def check_and_set_device_map(device_map) :
     from ..modeling_utils import get_torch_context_manager_or_global_device
 
     # Potentially detect context manager or global device, and use it (only if no device_map was provided)
@@ -271,7 +271,7 @@ def compute_module_total_buffer_size(model: nn.Module, hf_quantizer: "HfQuantize
 
 def get_balanced_memory(
     model: "PreTrainedModel",
-    max_memory: dict[int | str, int | str]  = None,
+    max_memory  = None,
     no_split_module_classes: list[str]  = None,
     hf_quantizer: "HfQuantizer " = None,
     low_zero: bool = False,
@@ -376,7 +376,7 @@ def get_balanced_memory(
 
 def _get_device_map(
     model: "PreTrainedModel",
-    device_map: dict | str ,
+    device_map,
     max_memory: dict ,
     hf_quantizer: "HfQuantizer ",
 ) -> dict:
@@ -586,20 +586,11 @@ def load_offloaded_parameter(model: "PreTrainedModel", param_name: str) -> torch
 
 def _init_infer_auto_device_map(
     model: nn.Module,
-    max_memory: dict[int | str, int | str]  = None,
+    max_memory = None,
     no_split_module_classes: list[str]  = None,
     tied_parameters: list[list[str]]  = None,
     hf_quantizer: "HfQuantizer " = None,
-) -> tuple[
-    list[int | str],
-    dict[int | str, int | str],
-    list[int | str],
-    list[int],
-    dict[str, int],
-    list[list[str]],
-    list[str],
-    list[tuple[str, nn.Module]],
-]:
+):
     """
     Initialize variables required for computing the device map for model allocation.
     """
@@ -656,7 +647,7 @@ def _init_infer_auto_device_map(
 
 def infer_auto_device_map(
     model: nn.Module,
-    max_memory: dict[int | str, int | str]  = None,
+    max_memory  = None,
     no_split_module_classes: list[str]  = None,
     verbose: bool = False,
     clean_result: bool = True,

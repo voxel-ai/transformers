@@ -81,7 +81,7 @@ def traced(
     *,
     span_name=None,
     standalone=False,
-    additional_attributes: list[tuple[str, str, Any | Callable[[Any], Any]]]  = None,
+    additional_attributes = None,
 ):
     """
     Decorator to trace function calls with OpenTelemetry.

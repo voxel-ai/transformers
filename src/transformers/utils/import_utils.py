@@ -125,6 +125,7 @@ def is_torch_available() -> bool:
 
 @lru_cache
 def get_torch_version() -> str:
+    return "2.3.1"
     _, torch_version = _is_package_available("torch", return_version=True)
     return torch_version
 

@@ -474,12 +474,12 @@ class PythonBackend(PreTrainedTokenizerBase):
         return dict(sorted(self._added_tokens_decoder.items(), key=lambda item: item[0]))
 
     @added_tokens_decoder.setter
-    def added_tokens_decoder(self, value: dict[int, AddedToken | str]) -> dict[int, AddedToken]:
+    def added_tokens_decoder(self, value) -> dict[int, AddedToken]:
         # Always raise an error if string because users should define the behavior
         for index, token in value.items():
             if not isinstance(token, (str, AddedToken)) or not isinstance(index, int):
                 raise TypeError(
-                    f"The provided `added_tokens_decoder` has an element of type {index.__class__, token.__class__}, should be a dict of {int, AddedToken | str}"
+                    f"The provided `added_tokens_decoder` has an element of type {index.__class__, token.__class__}, should be a dict of {int, AddedToken, str}"
                 )
 
             self._added_tokens_decoder[index] = AddedToken(token) if isinstance(token, str) else token
@@ -511,7 +511,7 @@ class PythonBackend(PreTrainedTokenizerBase):
         """
         self.total_vocab_size = len(self.get_vocab())
 
-    def _add_tokens(self, new_tokens: list[str] | list[AddedToken], special_tokens: bool = False) -> int:
+    def _add_tokens(self, new_tokens, special_tokens: bool = False) -> int:
         """
         Add a list of new tokens to the tokenizer class. If the new tokens are not in the vocabulary, they are added to
         it with indices starting from length of the current vocabulary. Special tokens are sometimes already in the
@@ -694,8 +694,8 @@ class PythonBackend(PreTrainedTokenizerBase):
 
     def _encode_plus(
         self,
-        text: TextInput | PreTokenizedInput | EncodedInput,
-        text_pair: TextInput | PreTokenizedInput | EncodedInput  = None,
+        text1,
+        text_pair = None,
         add_special_tokens: bool = True,
         padding_strategy: PaddingStrategy = PaddingStrategy.DO_NOT_PAD,
         truncation_strategy: TruncationStrategy = TruncationStrategy.DO_NOT_TRUNCATE,
@@ -704,7 +704,7 @@ class PythonBackend(PreTrainedTokenizerBase):
         is_split_into_words: bool = False,
         pad_to_multiple_of: int  = None,
         padding_side: str  = None,
-        return_tensors: str | TensorType  = None,
+        return_tensors= None,
         return_token_type_ids: bool  = None,
         return_attention_mask: bool  = None,
         return_overflowing_tokens: bool = False,
@@ -1014,7 +1014,7 @@ class PythonBackend(PreTrainedTokenizerBase):
     @overload
     def convert_ids_to_tokens(self, ids: list[int], skip_special_tokens: bool = False) -> list[str]: ...
 
-    def convert_ids_to_tokens(self, ids: int | list[int], skip_special_tokens: bool = False) -> str | list[str]:
+    def convert_ids_to_tokens(self, ids, skip_special_tokens: bool = False):
         """
         Converts a single index or a sequence of indices in a token or a sequence of tokens, using the vocabulary and
         added tokens.
@@ -1055,7 +1055,7 @@ class PythonBackend(PreTrainedTokenizerBase):
 
     def _decode(
         self,
-        token_ids: int | list[int],
+        token_ids,
         skip_special_tokens: bool = False,
         clean_up_tokenization_spaces: bool  = None,
         **kwargs,
@@ -1099,13 +1099,13 @@ class PythonBackend(PreTrainedTokenizerBase):
         ids: list[int],
         pair_ids: list[int]  = None,
         add_special_tokens: bool = True,
-        padding: bool | str | PaddingStrategy = False,
-        truncation: bool | str | TruncationStrategy = False,
+        padding = False,
+        truncation = False,
         max_length: int  = None,
         stride: int = 0,
         pad_to_multiple_of: int  = None,
         padding_side: str  = None,
-        return_tensors: str | TensorType  = None,
+        return_tensors = None,
         return_token_type_ids: bool  = None,
         return_attention_mask: bool  = None,
         return_overflowing_tokens: bool = False,
@@ -1209,7 +1209,7 @@ class PythonBackend(PreTrainedTokenizerBase):
         ids: list[int],
         pair_ids: list[int]  = None,
         num_tokens_to_remove: int = 0,
-        truncation_strategy: str | TruncationStrategy = "longest_first",
+        truncation_strategy = "longest_first",
         stride: int = 0,
     ) -> tuple[list[int], list[int], list[int]]:
         """Truncates sequences according to the specified strategy."""

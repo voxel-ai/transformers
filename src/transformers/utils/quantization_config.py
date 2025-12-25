@@ -128,7 +128,7 @@ class QuantizationConfigMixin:
         else:
             return config
 
-    def to_json_file(self, json_file_path: str | os.PathLike):
+    def to_json_file(self, json_file_path):
         """
         Save this instance to a JSON file.
 
@@ -680,7 +680,7 @@ class GPTQConfig(QuantizationConfigMixin):
         self,
         bits: int,
         tokenizer: Any = None,
-        dataset: list[str] | str  = None,
+        dataset = None,
         group_size: int = 128,
         damp_percent: float = 0.1,
         desc_act: bool = False,

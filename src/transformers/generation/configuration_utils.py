@@ -1,5 +1,5 @@
-# coding=utf-8
-# Copyright 2022 The HuggingFace Inc. team.
+# Copyright 2018 The Google AI Language Team Authors and The HuggingFace Inc. team.
+# Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,751 +12,434 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Generation configuration class and utilities."""
+"""Configuration base class and utilities."""
 
 import copy
 import json
 import os
-from abc import ABC, abstractmethod
-from collections.abc import Callable
-from dataclasses import dataclass, is_dataclass
-from typing import TYPE_CHECKING, Any, Optional, Union
+import warnings
+from typing import TYPE_CHECKING, Any, Optional, TypeVar, Union
 
 from huggingface_hub import create_repo
+from packaging import version
 
-from .. import __version__
-from ..utils import (
-    GENERATION_CONFIG_NAME,
-    ExplicitEnum,
+from . import __version__
+from .dynamic_module_utils import custom_object_save
+from .generation.configuration_utils import GenerationConfig
+from .modeling_gguf_pytorch_utils import load_gguf_checkpoint
+from .modeling_rope_utils import RotaryEmbeddingConfigMixin
+from .utils import (
+    CONFIG_NAME,
     PushToHubMixin,
     cached_file,
+    copy_func,
     extract_commit_hash,
     is_torch_available,
     logging,
 )
+from .utils.generic import is_timm_config_dict
 
 
 if TYPE_CHECKING:
-    from ..configuration_utils import PreTrainedConfig
-    from ..modeling_utils import PreTrainedModel
+    import torch
 
 
 logger = logging.get_logger(__name__)
-METADATA_FIELDS = ("_from_model_config", "_commit_hash", "_original_object_hash", "transformers_version")
-STATIC_CACHE_IMPLEMENTATIONS = ("static", "offloaded_static")
-DYNAMIC_CACHE_IMPLEMENTATIONS = ("dynamic", "dynamic_full", "offloaded", "quantized")
-# All the following are redundant and deprecated, but kept for BC
-DEPRECATED_STATIC_CACHE_IMPLEMENTATIONS = (
-    "sliding_window",
-    "hybrid",
-    "hybrid_chunked",
-    "offloaded_hybrid",
-    "offloaded_hybrid_chunked",
-)
-ALL_STATIC_CACHE_IMPLEMENTATIONS = STATIC_CACHE_IMPLEMENTATIONS + DEPRECATED_STATIC_CACHE_IMPLEMENTATIONS
-ALL_CACHE_IMPLEMENTATIONS = ALL_STATIC_CACHE_IMPLEMENTATIONS + DYNAMIC_CACHE_IMPLEMENTATIONS
 
 
-if is_torch_available():
-    from .logits_process import SynthIDTextWatermarkLogitsProcessor, WatermarkLogitsProcessor
+# type hinting: specifying the type of config class that inherits from PreTrainedConfig
+SpecificPreTrainedConfigType = TypeVar("SpecificPreTrainedConfigType", bound="PreTrainedConfig")
 
 
-class GenerationMode(ExplicitEnum):
-    """
-    Possible generation modes, downstream of the [`~generation.GenerationMixin.generate`] method.
-    """
-
-    # Non-beam methods
-    CONTRASTIVE_SEARCH = "contrastive_search"
-    GREEDY_SEARCH = "greedy_search"
-    SAMPLE = "sample"
-    ASSISTED_GENERATION = "assisted_generation"
-    DOLA_GENERATION = "dola_generation"
-    # Beam methods
-    BEAM_SEARCH = "beam_search"
-    BEAM_SAMPLE = "beam_sample"
-    CONSTRAINED_BEAM_SEARCH = "constrained_beam_search"
-    GROUP_BEAM_SEARCH = "group_beam_search"
-
-
-class GenerationConfig(PushToHubMixin):
+class PreTrainedConfig(PushToHubMixin, RotaryEmbeddingConfigMixin):
     # no-format
-    """
-    Class that holds a configuration for a generation task. A `generate` call supports the following generation methods
-    for text-decoder, text-to-text, speech-to-text, and vision-to-text models:
-
-        - *greedy decoding* if `num_beams=1` and `do_sample=False`
-        - *multinomial sampling* if `num_beams=1` and `do_sample=True`
-        - *beam-search decoding* if `num_beams>1` and `do_sample=False`
-        - *beam-search multinomial sampling* if `num_beams>1` and `do_sample=True`
-        - *assisted decoding* if `assistant_model` or `prompt_lookup_num_tokens` is passed to `.generate()`
-
-    To learn more about decoding strategies refer to the [text generation strategies guide](../generation_strategies).
+    r"""
+    Base class for all configuration classes. Handles a few parameters common to all models' configurations as well as
+    methods for loading/downloading/saving configurations.
 
     <Tip>
 
-    A large number of these flags control the logits or the stopping criteria of the generation. Make sure you check
-    the [generate-related classes](https://huggingface.co/docs/transformers/internal/generation_utils) for a full
-    description of the possible manipulations, as well as examples of their usage.
+    A configuration file can be loaded and saved to disk. Loading the configuration file and using this file to
+    initialize a model does **not** load the model weights. It only affects the model's configuration.
+
+    </Tip>
+
+    Class attributes (overridden by derived classes):
+
+    - **model_type** (`str`) -- An identifier for the model type, serialized into the JSON file, and used to recreate
+      the correct object in [`~transformers.AutoConfig`].
+    - **has_no_defaults_at_init** (`bool`) -- Whether the config class can be initialized without providing input arguments.
+      Some configurations requires inputs to be defined at init and have no default values, usually these are composite configs,
+      (but not necessarily) such as [`~transformers.EncoderDecoderConfig`] or [`~RagConfig`]. They have to be initialized from
+      two or more configs of type [`~transformers.PreTrainedConfig`].
+    - **keys_to_ignore_at_inference** (`list[str]`) -- A list of keys to ignore by default when looking at dictionary
+      outputs of the model during inference.
+    - **attribute_map** (`dict[str, str]`) -- A dict that maps model specific attribute names to the standardized
+      naming of attributes.
+    - **base_model_tp_plan** (`dict[str, Any]`) -- A dict that maps sub-modules FQNs of a base model to a tensor
+      parallel plan applied to the sub-module when `model.tensor_parallel` is called.
+    - **base_model_pp_plan** (`dict[str, tuple[list[str]]]`) -- A dict that maps child-modules of a base model to a
+      pipeline parallel plan that enables users to place the child-module on the appropriate device.
+
+    Common attributes (present in all subclasses):
+
+    - **vocab_size** (`int`) -- The number of tokens in the vocabulary, which is also the first dimension of the
+      embeddings matrix (this attribute may be missing for models that don't have a text modality like ViT).
+    - **hidden_size** (`int`) -- The hidden size of the model.
+    - **num_attention_heads** (`int`) -- The number of attention heads used in the multi-head attention layers of the
+      model.
+    - **num_hidden_layers** (`int`) -- The number of blocks in the model.
+
+    <Tip warning={true}>
+
+    Setting parameters for sequence generation in the model config is deprecated. For backward compatibility, loading
+    some of them will still be possible, but attempting to overwrite them will throw an exception -- you should set
+    them in a [~transformers.GenerationConfig]. Check the documentation of [~transformers.GenerationConfig] for more
+    information about the individual parameters.
 
     </Tip>
 
     Arg:
-        > Parameters that control the length of the output
+        name_or_path (`str`, *optional*, defaults to `""`):
+            Store the string that was passed to [`PreTrainedModel.from_pretrained`] as `pretrained_model_name_or_path`
+            if the configuration was created with such a method.
+        output_hidden_states (`bool`, *optional*, defaults to `False`):
+            Whether or not the model should return all hidden-states.
+        output_attentions (`bool`, *optional*, defaults to `False`):
+            Whether or not the model should returns all attentions.
+        return_dict (`bool`, *optional*, defaults to `True`):
+            Whether or not the model should return a [`~transformers.utils.ModelOutput`] instead of a plain tuple.
+        is_encoder_decoder (`bool`, *optional*, defaults to `False`):
+            Whether the model is used as an encoder/decoder or not.
+        is_decoder (`bool`, *optional*, defaults to `False`):
+            Whether to only use the decoder in an encoder-decoder architecture, otherwise it has no effect on
+            decoder-only or encoder-only architectures.
+        cross_attention_hidden_size (`bool`, *optional*):
+            The hidden size of the cross-attention layer in case the model is used as a decoder in an encoder-decoder
+            setting and the cross-attention hidden dimension differs from `self.config.hidden_size`.
+        add_cross_attention (`bool`, *optional*, defaults to `False`):
+            Whether cross-attention layers should be added to the model. Note, this option is only relevant for models
+            that can be used as decoder models within the [`EncoderDecoderModel`] class, which consists of all models
+            in `AUTO_MODELS_FOR_CAUSAL_LM`.
+        tie_encoder_decoder (`bool`, *optional*, defaults to `False`):
+            Whether all encoder weights should be tied to their equivalent decoder weights. This requires the encoder
+            and decoder model to have the exact same parameter names.
+        chunk_size_feed_forward (`int`, *optional*, defaults to `0`):
+            The chunk size of all feed forward layers in the residual attention blocks. A chunk size of `0` means that
+            the feed forward layer is not chunked. A chunk size of n means that the feed forward layer processes `n` <
+            sequence_length embeddings at a time. For more information on feed forward chunking, see [How does Feed
+            Forward Chunking work?](../glossary.html#feed-forward-chunking).
 
-        max_length (`int`, *optional*):
-            `max_new_tokens` is recommended for controlling how many tokens the model generates.
-            `max_length` remains for backward compatibility.
+        > Parameters for fine-tuning tasks
 
-        max_new_tokens (`int`, *optional*):
-            The maximum numbers of tokens to generate, ignoring the number of tokens in the prompt.
-        min_length (`int`, *optional*):
-            The minimum length of the sequence to be generated. Corresponds to the length of the input prompt +
-            `min_new_tokens`. Its effect is overridden by `min_new_tokens`, if also set.
-        min_new_tokens (`int`, *optional*):
-            The minimum numbers of tokens to generate, ignoring the number of tokens in the prompt.
-        early_stopping (`bool` or `str`, *optional*):
-            Controls the stopping condition for beam-based methods, like beam-search. It accepts the following values:
-            `True`, where the generation stops as soon as there are `num_beams` complete candidates; `False`, where an
-            heuristic is applied and the generation stops when is it very unlikely to find better candidates;
-            `"never"`, where the beam search procedure only stops when there cannot be better candidates (canonical
-            beam search algorithm).
-        max_time (`float`, *optional*):
-            The maximum amount of time you allow the computation to run for in seconds. generation will still finish
-            the current pass after allocated time has been passed.
-        stop_strings (`str or list[str]`, *optional*):
-            A string or a list of strings that should terminate generation if the model outputs them.
+        architectures (`list[str]`, *optional*):
+            Model architectures that can be used with the model pretrained weights.
+        finetuning_task (`str`, *optional*):
+            Name of the task used to fine-tune the model.
+        id2label (`dict[int, str]`, *optional*):
+            A map from index (for instance prediction index, or target index) to label.
+        label2id (`dict[str, int]`, *optional*):
+            A map from label to index for the model.
+        num_labels (`int`, *optional*):
+            Number of labels to use in the last layer added to the model, typically for a classification task.
+        task_specific_params (`dict[str, Any]`, *optional*):
+            Additional keyword arguments to store for the current task.
+        problem_type (`str`, *optional*):
+            Problem type for `XxxForSequenceClassification` models. Can be one of `"regression"`,
+            `"single_label_classification"` or `"multi_label_classification"`.
 
-        > Parameters that control the generation strategy used
+        > Parameters linked to the tokenizer
 
-        do_sample (`bool`, defaults to `False`):
-            Whether or not to use sampling ; use greedy decoding otherwise.
-        num_beams (`int`, *optional*):
-            Number of beams for beam search. 1 means no beam search.
-
-        > Parameters that control the cache
-
-        use_cache (`bool`, defaults to `True`):
-            Whether or not the model should use the past last key/values attentions (if applicable to the model) to
-            speed up decoding.
-        cache_implementation (`str`, *optional*):
-            Name of the cache class that will be instantiated in `generate`, for faster decoding. Possible values are:
-
-            - `"dynamic"`: [`DynamicCache`]
-            - `"static"`: [`StaticCache`]
-            - `"offloaded"`: [`DynamicCache(offloaded=True)`]
-            - `"offloaded_static"`: [`StaticCache(offloaded=True)`]
-            - `"quantized"`: [`QuantizedCache`]
-
-            If none is specified, we will use the default cache for the model (which is often [`DynamicCache`]). See
-            our [cache documentation](https://huggingface.co/docs/transformers/en/kv_cache) for further information.
-        cache_config (`dict`, *optional*, default to `None`):
-            Arguments used in the key-value cache class can be passed in `cache_config`.
-
-        > Parameters for manipulation of the model output logits
-
-        temperature (`float`, *optional*):
-            The value used to module the next token probabilities. This value is set in a model's `generation_config.json` file. If it isn't set, the default value is 1.0
-        top_k (`int`, *optional*):
-            The number of highest probability vocabulary tokens to keep for top-k-filtering. This value is set in a model's `generation_config.json` file. If it isn't set, the default value is 50.
-        top_p (`float`, *optional*):
-            If set to float < 1, only the smallest set of most probable tokens with probabilities that add up to
-            `top_p` or higher are kept for generation. This value is set in a model's `generation_config.json` file. If it isn't set, the default value is 1.0
-        min_p (`float`, *optional*):
-            Minimum token probability, which will be scaled by the probability of the most likely token. It must be a
-            value between 0 and 1. Typical values are in the 0.01-0.2 range, comparably selective as setting `top_p` in
-            the 0.99-0.8 range (use the opposite of normal `top_p` values).
-        top_h (`float`, *optional*):
-            Entropy budget scaling factor, which controls how much of the distribution’s entropy is preserved when sampling.
-            Must be a value between 0 and 1. At each step, tokens are sorted by probability, and the smallest prefix of tokens
-            is kept whose *renormalized* entropy is less than or equal to `top_h` times the entropy of the full distribution.
-            Smaller values (e.g., 0.2–0.5) lead to more focused, deterministic outputs, while values closer to 1.0 allow more
-            randomness and diversity. Typical values are in the 0.3–0.6 range.
-        typical_p (`float`, *optional*):
-            Local typicality measures how similar the conditional probability of predicting a target token next is to
-            the expected conditional probability of predicting a random token next, given the partial text already
-            generated. If set to float < 1, the smallest set of the most locally typical tokens with probabilities that
-            add up to `typical_p` or higher are kept for generation. See [this
-            paper](https://huggingface.co/papers/2202.00666) for more details.
-        epsilon_cutoff (`float`, *optional*):
-            If set to float strictly between 0 and 1, only tokens with a conditional probability greater than
-            `epsilon_cutoff` will be sampled. In the paper, suggested values range from 3e-4 to 9e-4, depending on the
-            size of the model. See [Truncation Sampling as Language Model
-            Desmoothing](https://huggingface.co/papers/2210.15191) for more details.
-        eta_cutoff (`float`, *optional*):
-            Eta sampling is a hybrid of locally typical sampling and epsilon sampling. If set to float strictly between
-            0 and 1, a token is only considered if it is greater than either `eta_cutoff` or `sqrt(eta_cutoff) *
-            exp(-entropy(softmax(next_token_logits)))`. The latter term is intuitively the expected next token
-            probability, scaled by `sqrt(eta_cutoff)`. In the paper, suggested values range from 3e-4 to 2e-3,
-            depending on the size of the model. See [Truncation Sampling as Language Model
-            Desmoothing](https://huggingface.co/papers/2210.15191) for more details.
-        repetition_penalty (`float`, *optional*):
-            The parameter for repetition penalty. 1.0 means no penalty. See [this
-            paper](https://huggingface.co/papers/1909.05858) for more details.
-        encoder_repetition_penalty (`float`, *optional*):
-            The parameter for encoder_repetition_penalty. An exponential penalty on sequences that are not in the
-            original input. 1.0 means no penalty.
-        length_penalty (`float`, *optional*):
-            Exponential penalty to the length that is used with beam-based generation. It is applied as an exponent to
-            the sequence length, which in turn is used to divide the score of the sequence. Since the score is the log
-            likelihood of the sequence (i.e. negative), `length_penalty` > 0.0 promotes longer sequences, while
-            `length_penalty` < 0.0 encourages shorter sequences.
-        no_repeat_ngram_size (`int`, *optional*):
-            If set to int > 0, all ngrams of that size can only occur once.
-        bad_words_ids (`list[list[int]]`, *optional*):
-            List of list of token ids that are not allowed to be generated. Check
-            [`~generation.NoBadWordsLogitsProcessor`] for further documentation and examples.
-        renormalize_logits (`bool`, defaults to `False`):
-            Whether to renormalize the logits after applying all the logits processors (including the custom
-            ones). It's highly recommended to set this flag to `True` as the search algorithms suppose the score logits
-            are normalized but some logit processors break the normalization.
-        forced_bos_token_id (`int`, *optional*, defaults to `model.config.forced_bos_token_id`):
-            The id of the token to force as the first generated token after the `decoder_start_token_id`. Useful for
-            multilingual models like [mBART](../model_doc/mbart) where the first generated token needs to be the target
-            language token.
-        forced_eos_token_id (`int` or list[int]`, *optional*, defaults to `model.config.forced_eos_token_id`):
-            The id of the token to force as the last generated token when `max_length` is reached. Optionally, use a
-            list to set multiple *end-of-sequence* tokens.
-        remove_invalid_values (`bool`, defaults to `model.config.remove_invalid_values`):
-            Whether to remove possible *nan* and *inf* outputs of the model to prevent the generation method to crash.
-            Note that using `remove_invalid_values` can slow down generation.
-        exponential_decay_length_penalty (`tuple(int, float)`, *optional*):
-            This Tuple adds an exponentially increasing length penalty, after a certain amount of tokens have been
-            generated. The tuple shall consist of: `(start_index, decay_factor)` where `start_index` indicates where
-            penalty starts and `decay_factor` represents the factor of exponential decay
-        suppress_tokens (`list[int]`, *optional*):
-            A list of tokens that will be suppressed at generation. The `SuppressTokens` logit processor will set their
-            log probs to `-inf` so that they are not sampled.
-        begin_suppress_tokens  (`list[int]`, *optional*):
-            A list of tokens that will be suppressed at the beginning of the generation. The `SuppressBeginTokens` logit
-            processor will set their log probs to `-inf` so that they are not sampled.
-        sequence_bias (`dict[tuple[int], float]`, *optional*)):
-            Dictionary that maps a sequence of tokens to its bias term. Positive biases increase the odds of the
-            sequence being selected, while negative biases do the opposite. Check
-            [`~generation.SequenceBiasLogitsProcessor`] for further documentation and examples.
-        token_healing (`bool`, defaults to `False`):
-            Heal tail tokens of prompts by replacing them with their appropriate extensions.
-            This enhances the quality of completions for prompts affected by greedy tokenization bias.
-        guidance_scale (`float`, *optional*):
-            The guidance scale for classifier free guidance (CFG). CFG is enabled by setting `guidance_scale > 1`.
-            Higher guidance scale encourages the model to generate samples that are more closely linked to the input
-            prompt, usually at the expense of poorer quality.
-        watermarking_config (`BaseWatermarkingConfig` or `dict`, *optional*):
-            Arguments used to watermark the model outputs by adding a small bias to randomly selected set of "green"
-            tokens. See the docs of [`SynthIDTextWatermarkingConfig`] and [`WatermarkingConfig`] for more
-            details. If passed as `Dict`, it will be converted to a `WatermarkingConfig` internally.
-
-        > Parameters that define the output variables of generate
-
-        num_return_sequences (`int`, *optional*, defaults to 1):
-            The number of independently computed returned sequences for each element in the batch.
-        output_attentions (`bool`, defaults to `False`):
-            Whether or not to return the attentions tensors of all attention layers. See `attentions` under returned
-            tensors for more details.
-        output_hidden_states (`bool`, defaults to `False`):
-            Whether or not to return the hidden states of all layers. See `hidden_states` under returned tensors for
-            more details.
-        output_scores (`bool`, defaults to `False`):
-            Whether or not to return the prediction scores. See `scores` under returned tensors for more details.
-        output_logits (`bool`, defaults to `False`):
-            Whether or not to return the unprocessed prediction logit scores. See `logits` under returned tensors for
-            more details.
-        return_dict_in_generate (`bool`, defaults to `False`):
-            Whether or not to return a [`~utils.ModelOutput`], as opposed to returning exclusively the generated
-            sequence. This flag must be set to `True` to return the generation cache (when `use_cache` is `True`)
-            or optional outputs (see flags starting with `output_`)
-
-        > Special tokens that can be used at generation time
-
-        pad_token_id (`int`, *optional*):
-            The id of the *padding* token.
+        tokenizer_class (`str`, *optional*):
+            The name of the associated tokenizer class to use (if none is set, will use the tokenizer associated to the
+            model by default).
+        prefix (`str`, *optional*):
+            A specific prompt that should be added at the beginning of each text before calling the model.
         bos_token_id (`int`, *optional*):
-            The id of the *beginning-of-sequence* token.
-        eos_token_id (`Union[int, list[int]]`, *optional*):
-            The id of the *end-of-sequence* token. Optionally, use a list to set multiple *end-of-sequence* tokens.
+            The id of the _beginning-of-stream_ token.
+        pad_token_id (`int`, *optional*):
+            The id of the _padding_ token.
+        eos_token_id (`int`, *optional*):
+            The id of the _end-of-stream_ token.
+        decoder_start_token_id (`int`, *optional*):
+            If an encoder-decoder model starts decoding with a different token than _bos_, the id of that token.
+        sep_token_id (`int`, *optional*):
+            The id of the _separation_ token.
 
-        > Generation parameters exclusive to encoder-decoder models
+        > PyTorch specific parameters
 
-        encoder_no_repeat_ngram_size (`int`, *optional*):
-            If set to int > 0, all ngrams of that size that occur in the `encoder_input_ids` cannot occur in the
-            `decoder_input_ids`.
-        decoder_start_token_id (`int` or `list[int]`, *optional*):
-            If an encoder-decoder model starts decoding with a different token than *bos*, the id of that token or a list of length
-            `batch_size`. Indicating a list enables different start ids for each element in the batch
-            (e.g. multilingual models with different target languages in one batch)
-
-        > Generation parameters exclusive to assistant generation
-        is_assistant (`bool`, defaults to `False`):
-            Whether the model is an assistant (draft) model.
-        num_assistant_tokens (`int`, *optional*):
-            Defines the number of _speculative tokens_ that shall be generated by the assistant model before being
-            checked by the target model at each iteration. Higher values for `num_assistant_tokens` make the generation
-            more _speculative_ : If the assistant model is performant larger speed-ups can be reached, if the assistant
-            model requires lots of corrections, lower speed-ups are reached.
-        num_assistant_tokens_schedule (`str`, *optional*):
-            Defines the schedule at which max assistant tokens shall be changed during inference.
-            - `"heuristic"`: When all speculative tokens are correct, increase `num_assistant_tokens` by 2 else
-              reduce by 1. `num_assistant_tokens` value is persistent over multiple generation calls with the same assistant model.
-            - `"heuristic_transient"`: Same as `"heuristic"` but `num_assistant_tokens` is reset to its initial value after each generation call.
-            - `"constant"`: `num_assistant_tokens` stays unchanged during generation
-        assistant_confidence_threshold (`float`, *optional*):
-            The confidence threshold for the assistant model. If the assistant model's confidence in its prediction for the current token is lower
-            than this threshold, the assistant model stops the current token generation iteration, even if the number of _speculative tokens_
-            (defined by `num_assistant_tokens`) is not yet reached. The assistant's confidence threshold is adjusted throughout the speculative iterations to reduce the number of unnecessary draft and target forward passes, biased towards avoiding false negatives.
-            `assistant_confidence_threshold` value is persistent over multiple generation calls with the same assistant model.
-            It is an unsupervised version of the dynamic speculation lookahead
-            from Dynamic Speculation Lookahead Accelerates Speculative Decoding of Large Language Models <https://huggingface.co/papers/2405.04304>.
-        prompt_lookup_num_tokens (`int`, *optional*):
-            The number of tokens to be output as candidate tokens.
-        max_matching_ngram_size (`int`, *optional*):
-            The maximum ngram size to be considered for matching in the prompt. Default to 2 if not provided.
-        assistant_early_exit(`int`, *optional*):
-            If set to a positive integer, early exit of the model will be used as an assistant. Can only be used with
-            models that support early exit (i.e. models where logits from intermediate layers can be interpreted by the LM head).
-        assistant_lookbehind(`int`, *optional*):
-            If set to a positive integer, the re-encodeing process will additionally consider the last `assistant_lookbehind` assistant tokens
-            to correctly align tokens. Can only be used with different tokenizers in speculative decoding.
-            See this [blog](https://huggingface.co/blog/universal_assisted_generation) for more details.
-        target_lookbehind(`int`, *optional*):
-            If set to a positive integer, the re-encodeing process will additionally consider the last `target_lookbehind` target tokens
-            to correctly align tokens. Can only be used with different tokenizers in speculative decoding.
-            See this [blog](https://huggingface.co/blog/universal_assisted_generation) for more details.
-
-        > Parameters related to performances and compilation
-
-        compile_config (CompileConfig, *optional*):
-            If using a compilable cache, this controls how `generate` will `compile` the forward pass for faster
-            inference.
-        disable_compile (`bool`, defaults to `False`):
-            Whether to disable the automatic compilation of the forward pass. Automatic compilation happens when
-            specific criteria are met, including using a compilable cache. Please open an issue if you find the
-            need to use this flag.
+        tie_word_embeddings (`bool`, *optional*, defaults to `True`):
+            Whether the model's input and output word embeddings should be tied. Note that this is only relevant if the
+            model has a output word embedding layer.
+        dtype (`str`, *optional*):
+            The `dtype` of the weights. This attribute can be used to initialize the model to a non-default `dtype`
+            (which is normally `float32`) and thus allow for optimal storage allocation. For example, if the saved
+            model is `float16`, ideally we want to load it back using the minimal amount of memory needed to load
+            `float16` weights.
     """
 
-    extra_output_flags = ("output_attentions", "output_hidden_states", "output_scores", "output_logits")
+    model_type: str = ""
+    base_config_key: str = ""
+    sub_configs: dict[str, type["PreTrainedConfig"]] = {}
+    has_no_defaults_at_init: bool = False
+    attribute_map: dict[str, str] = {}
+    base_model_tp_plan: Optional[dict[str, Any]] = None
+    base_model_pp_plan: Optional[dict[str, tuple[list[str]]]] = None
+    base_model_ep_plan: Optional[dict[str, tuple[list[str]]]] = None
+    _auto_class: Optional[str] = None
 
-    def __init__(self, **kwargs):
-        # Parameters that control the length of the output
-        self.max_length = kwargs.pop("max_length", None)
-        self.max_new_tokens = kwargs.pop("max_new_tokens", None)
-        self.min_length = kwargs.pop("min_length", None)
-        self.min_new_tokens = kwargs.pop("min_new_tokens", None)
-        self.early_stopping = kwargs.pop("early_stopping", None)
-        self.max_time = kwargs.pop("max_time", None)
-        self.stop_strings = kwargs.pop("stop_strings", None)
+    def __setattr__(self, key, value):
+        if key in super().__getattribute__("attribute_map"):
+            key = super().__getattribute__("attribute_map")[key]
+        super().__setattr__(key, value)
 
-        # Parameters that control the generation strategy used
-        self.do_sample = kwargs.pop("do_sample", False)
-        self.num_beams = kwargs.pop("num_beams", None)
+    def __getattribute__(self, key):
+        if key != "attribute_map" and key in super().__getattribute__("attribute_map"):
+            key = super().__getattribute__("attribute_map")[key]
+        return super().__getattribute__(key)
 
-        # Parameters that control the cache
-        self.use_cache = kwargs.pop("use_cache", True)
-        self.cache_implementation = kwargs.pop("cache_implementation", None)
-        self.cache_config = kwargs.pop("cache_config", None)
-
-        # Parameters for manipulation of the model output logits
-        self.temperature = kwargs.pop("temperature", None)
-        self.top_k = kwargs.pop("top_k", None)
-        self.top_p = kwargs.pop("top_p", None)
-        self.min_p = kwargs.pop("min_p", None)
-        self.top_h = kwargs.pop("top_h", None)
-        self.typical_p = kwargs.pop("typical_p", None)
-        self.epsilon_cutoff = kwargs.pop("epsilon_cutoff", None)
-        self.eta_cutoff = kwargs.pop("eta_cutoff", None)
-        self.repetition_penalty = kwargs.pop("repetition_penalty", None)
-        self.encoder_repetition_penalty = kwargs.pop("encoder_repetition_penalty", None)
-        self.length_penalty = kwargs.pop("length_penalty", None)
-        self.no_repeat_ngram_size = kwargs.pop("no_repeat_ngram_size", None)
-        self.bad_words_ids = kwargs.pop("bad_words_ids", None)
-        self.renormalize_logits = kwargs.pop("renormalize_logits", False)
-        self.forced_bos_token_id = kwargs.pop("forced_bos_token_id", None)
-        self.forced_eos_token_id = kwargs.pop("forced_eos_token_id", None)
-        self.remove_invalid_values = kwargs.pop("remove_invalid_values", False)
-        self.exponential_decay_length_penalty = kwargs.pop("exponential_decay_length_penalty", None)
-        self.suppress_tokens = kwargs.pop("suppress_tokens", None)
-        self.begin_suppress_tokens = kwargs.pop("begin_suppress_tokens", None)
-        self.sequence_bias = kwargs.pop("sequence_bias", None)
-        self.token_healing = kwargs.pop("token_healing", False)
-        self.guidance_scale = kwargs.pop("guidance_scale", None)
-
-        self.watermarking_config = kwargs.pop("watermarking_config", None)
-        if isinstance(self.watermarking_config, dict):
-            self.watermarking_config = WatermarkingConfig.from_dict(self.watermarking_config)
-
-        # Parameters that define the output variables of `generate`
-        self.num_return_sequences = kwargs.pop("num_return_sequences", 1)
-        self.output_attentions = kwargs.pop("output_attentions", False)
-        self.output_hidden_states = kwargs.pop("output_hidden_states", False)
-        self.output_scores = kwargs.pop("output_scores", False)
-        self.output_logits = kwargs.pop("output_logits", False)
-        self.return_dict_in_generate = kwargs.pop("return_dict_in_generate", False)
-
-        # Special tokens that can be used at generation time
-        self.pad_token_id = kwargs.pop("pad_token_id", None)
-        self.bos_token_id = kwargs.pop("bos_token_id", None)
-        self.eos_token_id = kwargs.pop("eos_token_id", None)
-
-        # Generation parameters exclusive to encoder-decoder models
-        self.encoder_no_repeat_ngram_size = kwargs.pop("encoder_no_repeat_ngram_size", None)
-        self.decoder_start_token_id = kwargs.pop("decoder_start_token_id", None)
-
-        # Assistant generation
-        self.is_assistant = kwargs.pop("is_assistant", False)
-        self.num_assistant_tokens = kwargs.pop("num_assistant_tokens", None)
-        self.num_assistant_tokens_schedule = kwargs.pop("num_assistant_tokens_schedule", None)
-        self.assistant_confidence_threshold = kwargs.pop("assistant_confidence_threshold", None)
-        self.prompt_lookup_num_tokens = kwargs.pop("prompt_lookup_num_tokens", None)
-        self.max_matching_ngram_size = kwargs.pop("max_matching_ngram_size", None)
-        self.assistant_early_exit = kwargs.pop("assistant_early_exit", None)
-        self.assistant_lookbehind = kwargs.pop("assistant_lookbehind", None)
-        self.target_lookbehind = kwargs.pop("target_lookbehind", None)
-
-        # Performance
-        self.compile_config = kwargs.pop("compile_config", None)
-        self.disable_compile = kwargs.pop("disable_compile", False)
-
-        # Deprecated (moved to the Hub). TODO remove for v5
-        self.low_memory = kwargs.pop("low_memory", None)
-        self.penalty_alpha = kwargs.pop("penalty_alpha", None)
-        self.dola_layers = kwargs.pop("dola_layers", None)
-        self.diversity_penalty = kwargs.pop("diversity_penalty", None)
-        self.num_beam_groups = kwargs.pop("num_beam_groups", None)
-        self.constraints = kwargs.pop("constraints", None)
-        self.force_words_ids = kwargs.pop("force_words_ids", None)
-
-        self.prefill_chunk_size = kwargs.pop("prefill_chunk_size", None)
-
-        # Common attributes
-        self._commit_hash = kwargs.pop("_commit_hash", None)
-        self._from_model_config = kwargs.pop("_from_model_config", None)
-        self.transformers_version = kwargs.pop("transformers_version", None)
-
-        # Additional attributes without default values
-        if not self._from_model_config:
-            # we don't want to copy values from the model config if we're initializing
-            # a `GenerationConfig` from a model's default configuration file
-            for key, value in kwargs.items():
-                try:
-                    setattr(self, key, value)
-                except AttributeError as err:
-                    logger.error(f"Can't set {key} with value {value} for {self}")
-                    raise err
-        else:
-            # Ensure backward compatibility for models that use `forced_bos_token_id` within their config
-            if kwargs.get("force_bos_token_to_be_generated", False):
-                self.forced_bos_token_id = self.bos_token_id
-                logger.warning_once(
-                    f"Please make sure the generation config includes `forced_bos_token_id={self.bos_token_id}`. "
-                )
-
-        # Validate the values of the attributes
-        self.validate()
-
-    def __hash__(self):
-        return hash(self.to_json_string(ignore_metadata=True))
-
-    def __eq__(self, other):
-        if not isinstance(other, GenerationConfig):
-            return False
-
-        self_without_metadata = self.to_json_string(use_diff=False, ignore_metadata=True)
-        other_without_metadata = other.to_json_string(use_diff=False, ignore_metadata=True)
-        return self_without_metadata == other_without_metadata
-
-    def __repr__(self):
-        return f"{self.__class__.__name__} {self.to_json_string(ignore_metadata=True)}"
-
-    def get_generation_mode(self, assistant_model: Optional["PreTrainedModel"] = None) -> GenerationMode:
-        """
-        Returns the generation mode triggered by the [`GenerationConfig`] instance.
-
-        Arg:
-            assistant_model (`PreTrainedModel`, *optional*):
-                The assistant model to be used for assisted generation. If set, the generation mode will be
-                assisted generation.
-
-        Returns:
-            `GenerationMode`: The generation mode triggered by the instance.
-        """
-        # TODO joao: find out a way of not depending on external fields (e.g. `assistant_model`), then make this a
-        # property and part of the `__repr__`
-        if self.constraints is not None or self.force_words_ids is not None:
-            generation_mode = GenerationMode.CONSTRAINED_BEAM_SEARCH
-        elif self.num_beams is None or self.num_beams == 1:
-            if not self.do_sample:
-                if (
-                    self.top_k is not None
-                    and self.top_k > 1
-                    and self.penalty_alpha is not None
-                    and self.penalty_alpha > 0
-                ):
-                    generation_mode = GenerationMode.CONTRASTIVE_SEARCH
-                else:
-                    generation_mode = GenerationMode.GREEDY_SEARCH
-            else:
-                generation_mode = GenerationMode.SAMPLE
-        else:
-            if self.num_beam_groups is not None and self.num_beam_groups > 1:
-                generation_mode = GenerationMode.GROUP_BEAM_SEARCH
-            elif self.do_sample:
-                generation_mode = GenerationMode.BEAM_SAMPLE
-            else:
-                generation_mode = GenerationMode.BEAM_SEARCH
-
-        # Assisted generation may extend some generation modes
-        if (
-            assistant_model is not None
-            or self.prompt_lookup_num_tokens is not None
-            or self.assistant_early_exit is not None
-        ):
-            if generation_mode in ("greedy_search", "sample"):
-                generation_mode = GenerationMode.ASSISTED_GENERATION
-            else:
-                logger.warning(
-                    "You've set `assistant_model`, which triggers assisted generate. Currently, assisted generate "
-                    "is only supported with Greedy Search and Sample. However, the base decoding mode (based on "
-                    f"current flags) is {generation_mode} -- some of the set flags will be ignored."
-                )
-
-        # DoLa generation may extend some generation modes
-        # TODO joao, manuel: remove this in v4.62.0
-        if self.dola_layers is not None:
-            if generation_mode in ("greedy_search", "sample"):
-                generation_mode = GenerationMode.DOLA_GENERATION
-            else:
-                logger.warning(
-                    "You've set `dola_layers`, which triggers DoLa generate. Currently, DoLa generate "
-                    "is only supported with Greedy Search and Sample.  However, the base decoding mode (based on "
-                    f"current flags) is {generation_mode} -- some of the set flags will be ignored."
-                )
-        return generation_mode
-
-    @staticmethod
-    def _get_default_generation_params() -> dict[str, Any]:
-        return {
-            "max_length": 20,
-            "min_length": 0,
-            "do_sample": False,
-            "early_stopping": False,
-            "num_beams": 1,
-            "temperature": 1.0,
-            "top_k": 50,
-            "top_p": 1.0,
-            "typical_p": 1.0,
-            "repetition_penalty": 1.0,
-            "length_penalty": 1.0,
-            "no_repeat_ngram_size": 0,
-            "encoder_no_repeat_ngram_size": 0,
-            "bad_words_ids": None,
-            "num_return_sequences": 1,
-            "output_scores": False,
-            "return_dict_in_generate": False,
-            "forced_bos_token_id": None,
-            "forced_eos_token_id": None,
-            "remove_invalid_values": False,
-            "exponential_decay_length_penalty": None,
-            "suppress_tokens": None,
-            "begin_suppress_tokens": None,
-            "epsilon_cutoff": 0.0,
-            "eta_cutoff": 0.0,
-            "encoder_repetition_penalty": 1.0,
-            "num_assistant_tokens": 20,
-            "num_assistant_tokens_schedule": "constant",
-            "assistant_confidence_threshold": 0.4,
-            "assistant_lookbehind": 10,
-            "target_lookbehind": 10,
-            # Deprecated arguments (moved to the Hub). TODO joao, manuel: remove in v4.62.0
-            "num_beam_groups": 1,
-            "diversity_penalty": 0.0,
-        }
-
-    def validate(self, strict=False):
-        """
-        Validates the values of the attributes of the [`GenerationConfig`] instance. Raises exceptions in the presence
-        of parameterization that can be detected as incorrect from the configuration instance alone.
-
-        Note that some parameters not validated here are best validated at generate runtime, as they may depend on
-        other inputs and/or the model, such as parameters related to the generation length.
-
-        Args:
-            strict (bool): If True, raise an exception for any issues found. If False, only log issues.
-        """
-        minor_issues = {}  # format: {attribute_name: issue_description}
-
-        # 1. Validation of individual attributes
-        # 1.1. Decoding attributes
-        if self.early_stopping not in {None, True, False, "never"}:
-            raise ValueError(f"`early_stopping` must be a boolean or 'never', but is {self.early_stopping}.")
-        if self.max_new_tokens is not None and self.max_new_tokens <= 0:
-            raise ValueError(f"`max_new_tokens` must be greater than 0, but is {self.max_new_tokens}.")
-        if self.pad_token_id is not None and self.pad_token_id < 0:
-            minor_issues["pad_token_id"] = (
-                f"`pad_token_id` should be positive but got {self.pad_token_id}. This will cause errors when batch "
-                "generating, if there is padding. Please set `pad_token_id` explicitly as "
-                "`model.generation_config.pad_token_id=PAD_TOKEN_ID` to avoid errors in generation"
-            )
-        # 1.2. Cache attributes
-        # "paged" re-routes to continuous batching and so it is a valid cache implementation. But we do not want to test
-        # it with the `generate` as the other would be, so we we cannot add it to ALL_CACHE_IMPLEMENTATIONS
-        valid_cache_implementations = ALL_CACHE_IMPLEMENTATIONS + ("paged",)
-        if self.cache_implementation is not None and self.cache_implementation not in valid_cache_implementations:
-            raise ValueError(
-                f"Invalid `cache_implementation` ({self.cache_implementation}). Choose one of: "
-                f"{valid_cache_implementations}"
-            )
-        # 1.3. Performance attributes
-        if self.compile_config is not None and not isinstance(self.compile_config, CompileConfig):
-            raise ValueError(
-                f"You provided `compile_config` as an instance of {type(self.compile_config)}, but it must be an "
-                "instance of `CompileConfig`."
-            )
-        # 1.4. Watermarking attributes
-        if self.watermarking_config is not None:
-            self.watermarking_config.validate()
-
-        # 2. Validation of attribute combinations
-        # 2.1. detect sampling-only parameterization when not in sampling mode
-        if not self.do_sample:
-            greedy_wrong_parameter_msg = (
-                "`do_sample` is set not to set `True`. However, `{flag_name}` is set to `{flag_value}` -- this flag is only "
-                "used in sample-based generation modes. You should set `do_sample=True` or unset `{flag_name}`."
-            )
-            if self.temperature is not None and self.temperature != 1.0:
-                minor_issues["temperature"] = greedy_wrong_parameter_msg.format(
-                    flag_name="temperature", flag_value=self.temperature
-                )
-            if self.top_p is not None and self.top_p != 1.0:
-                minor_issues["top_p"] = greedy_wrong_parameter_msg.format(flag_name="top_p", flag_value=self.top_p)
-            if self.min_p is not None:
-                minor_issues["min_p"] = greedy_wrong_parameter_msg.format(flag_name="min_p", flag_value=self.min_p)
-            if self.top_h is not None:
-                minor_issues["top_h"] = greedy_wrong_parameter_msg.format(flag_name="top_h", flag_value=self.top_h)
-            if self.typical_p is not None and self.typical_p != 1.0:
-                minor_issues["typical_p"] = greedy_wrong_parameter_msg.format(
-                    flag_name="typical_p", flag_value=self.typical_p
-                )
-            if self.top_k is not None and self.top_k != 50:
-                minor_issues["top_k"] = greedy_wrong_parameter_msg.format(flag_name="top_k", flag_value=self.top_k)
-            if self.epsilon_cutoff is not None and self.epsilon_cutoff != 0.0:
-                minor_issues["epsilon_cutoff"] = greedy_wrong_parameter_msg.format(
-                    flag_name="epsilon_cutoff", flag_value=self.epsilon_cutoff
-                )
-            if self.eta_cutoff is not None and self.eta_cutoff != 0.0:
-                minor_issues["eta_cutoff"] = greedy_wrong_parameter_msg.format(
-                    flag_name="eta_cutoff", flag_value=self.eta_cutoff
-                )
-
-        # 2.2. detect beam-only parameterization when not in beam mode
-        if self.num_beams is None or self.num_beams == 1:
-            single_beam_wrong_parameter_msg = (
-                "`num_beams` is set to {num_beams}. However, `{flag_name}` is set to `{flag_value}` -- this flag is only used "
-                "in beam-based generation modes. You should set `num_beams>1` or unset `{flag_name}`."
-            )
-            if self.early_stopping is not None and self.early_stopping is not False:
-                minor_issues["early_stopping"] = single_beam_wrong_parameter_msg.format(
-                    num_beams=self.num_beams, flag_name="early_stopping", flag_value=self.early_stopping
-                )
-            if self.length_penalty is not None and self.length_penalty != 1.0:
-                minor_issues["length_penalty"] = single_beam_wrong_parameter_msg.format(
-                    num_beams=self.num_beams, flag_name="length_penalty", flag_value=self.length_penalty
-                )
-
-        # 2.4. check `num_return_sequences`
-        if self.num_return_sequences > 1:
-            if self.num_beams is None or self.num_beams == 1:
-                if not self.do_sample:
-                    raise ValueError(
-                        "Greedy methods (do_sample != True) without beam search do not support "
-                        f"`num_return_sequences` different than 1 (got {self.num_return_sequences})."
-                    )
-            elif self.num_beams is not None and self.num_return_sequences > self.num_beams:
-                raise ValueError(
-                    f"`num_return_sequences` ({self.num_return_sequences}) has to be smaller or equal to `num_beams` "
-                    f"({self.num_beams})."
-                )
-
-        # 2.5. check cache-related arguments
-        if not self.use_cache:
-            # In this case, all cache-related arguments should be unset. However, since `use_cache=False` is often used
-            # passed to `generate` directly to hot-fix cache issues, let's raise a warning instead of an error
-            # (otherwise a user might need to overwrite several parameters).
-            no_cache_warning = (
-                "You have not set `use_cache` to `True`, but {cache_arg} is set to {cache_arg_value}."
-                "{cache_arg} will have no effect."
-            )
-            for arg_name in ("cache_implementation", "cache_config"):
-                if getattr(self, arg_name) is not None:
-                    minor_issues[arg_name] = no_cache_warning.format(
-                        cache_arg=arg_name, cache_arg_value=getattr(self, arg_name)
-                    )
-
-        # 2.6. other incorrect combinations
-        if not self.return_dict_in_generate:
-            for extra_output_flag in self.extra_output_flags:
-                if getattr(self, extra_output_flag):
-                    minor_issues[extra_output_flag] = (
-                        f"`return_dict_in_generate` is NOT set to `True`, but `{extra_output_flag}` is. When "
-                        f"`return_dict_in_generate` is not `True`, `{extra_output_flag}` is ignored."
-                    )
-
-        # 3. Check common issue: passing `generate` arguments inside the generation config
-        generate_arguments = (
-            "logits_processor",
-            "stopping_criteria",
-            "prefix_allowed_tokens_fn",
-            "synced_gpus",
-            "assistant_model",
-            "streamer",
-            "negative_prompt_ids",
-            "negative_prompt_attention_mask",
-        )
-        for arg in generate_arguments:
-            if hasattr(self, arg):
-                raise ValueError(
-                    f"Argument `{arg}` is not a valid argument of `GenerationConfig`. It should be passed to "
-                    "`generate()` (or a pipeline) directly."
-                )
-
-        # Finally, handle caught minor issues. With default parameterization, we will throw a minimal warning.
-        if len(minor_issues) > 0:
-            # Full list of issues with potential fixes
-            info_message = []
-            for attribute_name, issue_description in minor_issues.items():
-                info_message.append(f"- `{attribute_name}`: {issue_description}")
-            info_message = "\n".join(info_message)
-            info_message += (
-                "\nIf you're using a pretrained model, note that some of these attributes may be set through the "
-                "model's `generation_config.json` file."
-            )
-
-            if strict:
-                raise ValueError("GenerationConfig is invalid: \n" + info_message)
-            else:
-                attributes_with_issues = list(minor_issues.keys())
-                warning_message = (
-                    f"The following generation flags are not valid and may be ignored: {attributes_with_issues}."
-                )
-                if logging.get_verbosity() >= logging.WARNING:
-                    warning_message += " Set `TRANSFORMERS_VERBOSITY=info` for more details."
-                logger.warning_once(warning_message)
-                logger.info_once(info_message)
-
-    def save_pretrained(
+    def __init__(
         self,
-        save_directory: str | os.PathLike,
-        config_file_name: str | os.PathLike  = None,
-        push_to_hub: bool = False,
+        *,
+        # All models common arguments
+        output_hidden_states: bool = False,
+        output_attentions: bool = False,
+        return_dict: bool = True,
+        dtype: Optional[Union[str, "torch.dtype"]] = None,
+        # Common arguments
+        tie_word_embeddings: bool = True,
+        chunk_size_feed_forward: int = 0,
+        is_encoder_decoder: bool = False,
+        is_decoder: bool = False,
+        cross_attention_hidden_size: Optional[int] = None,
+        add_cross_attention: bool = False,
+        tie_encoder_decoder: bool = False,
+        # Fine-tuning task arguments
+        architectures: Optional[list[str]] = None,
+        finetuning_task: Optional[str] = None,
+        id2label: Optional[dict[int, str]] = None,
+        label2id: Optional[dict[str, int]] = None,
+        num_labels: Optional[int] = None,
+        task_specific_params: Optional[dict[str, Any]] = None,
+        problem_type: Optional[str] = None,
+        # Tokenizer kwargs
+        tokenizer_class: Optional[str] = None,
+        prefix: Optional[str] = None,
+        bos_token_id: Optional[int] = None,
+        pad_token_id: Optional[int] = None,
+        eos_token_id: Optional[int] = None,
+        sep_token_id: Optional[int] = None,
+        decoder_start_token_id: Optional[int] = None,
         **kwargs,
     ):
-        r"""
-        Save a generation configuration object to the directory `save_directory`, so that it can be re-loaded using the
-        [`~GenerationConfig.from_pretrained`] class method.
+        # Validation for some arguments
+        if label2id is not None and not isinstance(label2id, dict):
+            raise ValueError("Argument label2id should be a dictionary.")
+        if id2label is not None and not isinstance(id2label, dict):
+            raise ValueError("Argument id2label should be a dictionary.")
+        if num_labels is not None and id2label is not None and len(id2label) != num_labels:
+            logger.warning(
+                f"You passed `num_labels={num_labels}` which is incompatible to "
+                f"the `id2label` map of length `{len(id2label)}`."
+            )
+        if problem_type is not None and problem_type not in (
+            "regression",
+            "single_label_classification",
+            "multi_label_classification",
+        ):
+            raise ValueError(
+                f"The config parameter `problem_type` was not understood: received {problem_type} "
+                "but only 'regression', 'single_label_classification' and 'multi_label_classification' are valid."
+            )
+        # BC for the `torch_dtype` argument instead of the simpler `dtype`
+        # Do not warn, as it would otherwise always be triggered since most configs on the hub have `torch_dtype`
+        if (torch_dtype := kwargs.pop("torch_dtype", None)) is not None:
+            # If both are provided, keep `dtype`
+            dtype = dtype if dtype is not None else torch_dtype
+        if dtype is not None and isinstance(dtype, str) and is_torch_available():
+            # we will start using self.dtype in v5, but to be consistent with
+            # from_pretrained's dtype arg convert it to an actual torch.dtype object
+            import torch
+
+            dtype = getattr(torch, dtype)
+
+        # BC for rotary embeddings. We will pop out legacy keys from kwargs and rename to new format
+        if hasattr(self, "rope_parameters"):
+            ignore_keys_at_rope_validation = kwargs.pop("ignore_keys_at_rope_validation", None)
+            kwargs = self.convert_rope_params_to_dict(
+                ignore_keys_at_rope_validation=ignore_keys_at_rope_validation, **kwargs
+            )
+
+        # Attributes common for all models
+        self.return_dict = return_dict
+        self.output_hidden_states = output_hidden_states
+        self.dtype = dtype
+        self._output_attentions = output_attentions  # has public property
+
+        # Less common kwargs, only used by some models
+        self.tie_word_embeddings = tie_word_embeddings
+        self.chunk_size_feed_forward = chunk_size_feed_forward
+
+        # Encoder-decoder models attributes
+        self.is_encoder_decoder = is_encoder_decoder
+        self.is_decoder = is_decoder  # used in encoder-decoder models to differentiate encoder from decoder
+        self.cross_attention_hidden_size = cross_attention_hidden_size
+        self.add_cross_attention = add_cross_attention
+        self.tie_encoder_decoder = tie_encoder_decoder
+
+        # Fine-tuning task attributes
+        self.architectures = architectures
+        self.finetuning_task = finetuning_task
+        self.id2label = id2label
+        self.label2id = label2id
+        self.task_specific_params = task_specific_params
+        self.problem_type = problem_type
+
+        if self.id2label is None:
+            self._create_id_label_maps(num_labels if num_labels is not None else 2)
+        else:
+            # Keys are always strings in JSON so convert ids to int here.
+            self.id2label = {int(key): value for key, value in self.id2label.items()}
+
+        # Tokenizer attributes
+        self.tokenizer_class = tokenizer_class
+        self.prefix = prefix
+        self.bos_token_id = bos_token_id
+        self.pad_token_id = pad_token_id
+        self.eos_token_id = eos_token_id
+        self.sep_token_id = sep_token_id
+        self.decoder_start_token_id = decoder_start_token_id
+
+        # Parameters for sequence generation saved in the config are popped instead of loading them.
+        for parameter_name in GenerationConfig._get_default_generation_params().keys():
+            kwargs.pop(parameter_name, None)
+
+        # Name or path to the pretrained checkpoint
+        self._name_or_path = str(kwargs.pop("name_or_path", ""))
+        self._commit_hash = kwargs.pop("_commit_hash", None)
+
+        # Attention implementation to use, if relevant (it sets it recursively on sub-configs)
+        self._attn_implementation = kwargs.pop("attn_implementation", None)
+
+        # Drop the transformers version info
+        self.transformers_version = kwargs.pop("transformers_version", None)
+
+        # Deal with gradient checkpointing
+        if kwargs.get("gradient_checkpointing", False):
+            warnings.warn(
+                "Passing `gradient_checkpointing` to a config initialization is deprecated and will be removed in v5 "
+                "Transformers. Using `model.gradient_checkpointing_enable()` instead, or if you are using the "
+                "`Trainer` API, pass `gradient_checkpointing=True` in your `TrainingArguments`."
+            )
+
+        # Additional attributes without default values
+        for key, value in kwargs.items():
+            try:
+                setattr(self, key, value)
+            except AttributeError as err:
+                logger.error(f"Can't set {key} with value {value} for {self}")
+                raise err
+
+    def _create_id_label_maps(self, num_labels: int):
+        self.id2label = {i: f"LABEL_{i}" for i in range(num_labels)}
+        self.label2id = dict(zip(self.id2label.values(), self.id2label.keys()))
+
+    @property
+    def name_or_path(self) -> Optional[str]:
+        return getattr(self, "_name_or_path", None)
+
+    @name_or_path.setter
+    def name_or_path(self, value):
+        self._name_or_path = str(value)  # Make sure that name_or_path is a string (for JSON encoding)
+
+    @property
+    def output_attentions(self):
+        """
+        `bool`: Whether or not the model should returns all attentions.
+        """
+        return self._output_attentions
+
+    @output_attentions.setter
+    def output_attentions(self, value: bool):
+        # If we set `output_attentions` explicitly before the attn implementation, dispatch eager
+        if value and self._attn_implementation is None:
+            self._attn_implementation = "eager"
+        if value and self._attn_implementation != "eager":
+            raise ValueError(
+                "The `output_attentions` attribute is not supported when using the `attn_implementation` set to "
+                f"{self._attn_implementation}. Please set it to 'eager' instead."
+            )
+        self._output_attentions = value
+
+    @property
+    def use_return_dict(self) -> bool:
+        """
+        `bool`: Whether or not return [`~utils.ModelOutput`] instead of tuples.
+        """
+        return self.return_dict
+
+    @property
+    def num_labels(self) -> int:
+        """
+        `int`: The number of labels for classification models.
+        """
+        return len(self.id2label)
+
+    @num_labels.setter
+    def num_labels(self, num_labels: int):
+        # we do not store `num_labels` attribute in config, but instead
+        # compute it based on the length of the `id2label` map
+        if self.id2label is None or self.num_labels != num_labels:
+            self._create_id_label_maps(num_labels)
+
+    @property
+    def _attn_implementation(self):
+        return self._attn_implementation_internal
+
+    @_attn_implementation.setter
+    def _attn_implementation(self, value):
+        """We set it recursively on the sub-configs as well"""
+        # Set if for current config
+        current_attn = getattr(self, "_attn_implementation", None)
+        attn_implementation = value if not isinstance(value, dict) else value.get("", current_attn)
+        self._attn_implementation_internal = attn_implementation
+
+        # Set it recursively on the subconfigs
+        for subconfig_key in self.sub_configs:
+            subconfig = getattr(self, subconfig_key, None)
+            if subconfig is not None:
+                current_subconfig_attn = getattr(subconfig, "_attn_implementation", None)
+                sub_implementation = (
+                    value if not isinstance(value, dict) else value.get(subconfig_key, current_subconfig_attn)
+                )
+                subconfig._attn_implementation = sub_implementation
+
+    @property
+    def torch_dtype(self):
+        logger.warning_once("`torch_dtype` is deprecated! Use `dtype` instead!")
+        return self.dtype
+
+    @torch_dtype.setter
+    def torch_dtype(self, value):
+        logger.warning_once("`torch_dtype` is deprecated! Use `dtype` instead!")
+        self.dtype = value
+
+    @property
+    def rope_scaling(self):
+        return self.rope_parameters
+
+    @rope_scaling.setter
+    def rope_scaling(self, value):
+        self.rope_parameters = value
+
+    def save_pretrained(self, save_directory, push_to_hub: bool = False, **kwargs):
+        """
+        Save a configuration object to the directory `save_directory`, so that it can be re-loaded using the
+        [`~PreTrainedConfig.from_pretrained`] class method.
 
         Args:
             save_directory (`str` or `os.PathLike`):
                 Directory where the configuration JSON file will be saved (will be created if it does not exist).
-            config_file_name (`str` or `os.PathLike`, *optional*, defaults to `"generation_config.json"`):
-                Name of the generation configuration JSON file to be saved in `save_directory`.
             push_to_hub (`bool`, *optional*, defaults to `False`):
                 Whether or not to push your model to the Hugging Face model hub after saving it. You can specify the
                 repository you want to push to with `repo_id` (will default to the name of `save_directory` in your
@@ -764,19 +447,15 @@ class GenerationConfig(PushToHubMixin):
             kwargs (`dict[str, Any]`, *optional*):
                 Additional key word arguments passed along to the [`~utils.PushToHubMixin.push_to_hub`] method.
         """
-
-        # At save time, validate the instance enforcing strictness -- if any warning/exception would be thrown, we
-        # refuse to save the instance.
-        # This strictness is enforced to prevent bad configurations from being saved and re-used.
-        try:
-            self.validate(strict=True)
-        except ValueError as exc:
-            raise ValueError(str(exc) + "\n\nFix these issues to save the configuration.")
-
-        config_file_name = config_file_name if config_file_name is not None else GENERATION_CONFIG_NAME
-
         if os.path.isfile(save_directory):
             raise AssertionError(f"Provided path ({save_directory}) should be a directory, not a file")
+
+        generation_parameters = self._get_generation_parameters()
+        if len(generation_parameters) > 0:
+            raise ValueError(
+                "Some generation parameters are set in the model config. These should go into `model.generation_config`"
+                f"as opposed to `model.config`. \nGeneration parameters found: {str(generation_parameters)}",
+            )
 
         os.makedirs(save_directory, exist_ok=True)
 
@@ -786,9 +465,19 @@ class GenerationConfig(PushToHubMixin):
             repo_id = create_repo(repo_id, exist_ok=True, **kwargs).repo_id
             files_timestamps = self._get_files_timestamps(save_directory)
 
-        output_config_file = os.path.join(save_directory, config_file_name)
+        # This attribute is important to know on load, but should not be serialized on save.
+        if "transformers_weights" in self:
+            delattr(self, "transformers_weights")
 
-        self.to_json_file(output_config_file, use_diff=True, keys_to_pop=["compile_config"])
+        # If we have a custom config, we copy the file defining it in the folder and set the attributes so it can be
+        # loaded from the Hub.
+        if self._auto_class is not None:
+            custom_object_save(self, save_directory, config=self)
+
+        # If we save using the predefined names, we can load using `from_pretrained`
+        output_config_file = os.path.join(save_directory, CONFIG_NAME)
+
+        self.to_json_file(output_config_file, use_diff=True)
         logger.info(f"Configuration saved in {output_config_file}")
 
         if push_to_hub:
@@ -802,29 +491,27 @@ class GenerationConfig(PushToHubMixin):
 
     @classmethod
     def from_pretrained(
-        cls,
-        pretrained_model_name: str | os.PathLike,
-        config_file_name: str | os.PathLike  = None,
-        cache_dir: str | os.PathLike  = None,
+        cls: type[SpecificPreTrainedConfigType],
+        pretrained_model_name_or_path,
+        cache_dir = None,
         force_download: bool = False,
         local_files_only: bool = False,
-        token: str | bool  = None,
+        token = None,
         revision: str = "main",
         **kwargs,
-    ) -> "GenerationConfig":
+    ) -> SpecificPreTrainedConfigType:
         r"""
-        Instantiate a [`GenerationConfig`] from a generation configuration file.
+        Instantiate a [`PreTrainedConfig`] (or a derived class) from a pretrained model configuration.
 
         Args:
-            pretrained_model_name (`str` or `os.PathLike`):
+            pretrained_model_name_or_path (`str` or `os.PathLike`):
                 This can be either:
 
                 - a string, the *model id* of a pretrained model configuration hosted inside a model repo on
                   huggingface.co.
                 - a path to a *directory* containing a configuration file saved using the
-                  [`~GenerationConfig.save_pretrained`] method, e.g., `./my_model_directory/`.
-            config_file_name (`str` or `os.PathLike`, *optional*, defaults to `"generation_config.json"`):
-                Name of the generation configuration JSON file to be loaded from `pretrained_model_name`.
+                  [`~PreTrainedConfig.save_pretrained`] method, e.g., `./my_model_directory/`.
+                - a path or url to a saved configuration JSON *file*, e.g., `./my_model_directory/configuration.json`.
             cache_dir (`str` or `os.PathLike`, *optional*):
                 Path to a directory in which a downloaded pretrained model configuration should be cached if the
                 standard cache should not be used.
@@ -863,61 +550,128 @@ class GenerationConfig(PushToHubMixin):
                 by the `return_unused_kwargs` keyword parameter.
 
         Returns:
-            [`GenerationConfig`]: The configuration object instantiated from this pretrained model.
+            [`PreTrainedConfig`]: The configuration object instantiated from this pretrained model.
 
         Examples:
 
         ```python
-        >>> from transformers import GenerationConfig
-
-        >>> # Download configuration from huggingface.co and cache.
-        >>> generation_config = GenerationConfig.from_pretrained("openai-community/gpt2")
-
-        >>> # E.g. config was saved using *save_pretrained('./test/saved_model/')*
-        >>> generation_config.save_pretrained("./test/saved_model/")
-        >>> generation_config = GenerationConfig.from_pretrained("./test/saved_model/")
-
-        >>> # You can also specify configuration names to your generation configuration file
-        >>> generation_config.save_pretrained("./test/saved_model/", config_file_name="my_configuration.json")
-        >>> generation_config = GenerationConfig.from_pretrained("./test/saved_model/", "my_configuration.json")
-
-        >>> # If you'd like to try a minor variation to an existing configuration, you can also pass generation
-        >>> # arguments to `.from_pretrained()`. Be mindful that typos and unused arguments will be ignored
-        >>> generation_config, unused_kwargs = GenerationConfig.from_pretrained(
-        ...     "openai-community/gpt2", top_k=1, foo=False, do_sample=True, return_unused_kwargs=True
-        ... )
-        >>> generation_config.top_k
-        1
-
-        >>> unused_kwargs
-        {'foo': False}
+        # We can't instantiate directly the base class *PreTrainedConfig* so let's show the examples on a
+        # derived class: BertConfig
+        config = BertConfig.from_pretrained(
+            "google-bert/bert-base-uncased"
+        )  # Download configuration from huggingface.co and cache.
+        config = BertConfig.from_pretrained(
+            "./test/saved_model/"
+        )  # E.g. config (or model) was saved using *save_pretrained('./test/saved_model/')*
+        config = BertConfig.from_pretrained("./test/saved_model/my_configuration.json")
+        config = BertConfig.from_pretrained("google-bert/bert-base-uncased", output_attentions=True, foo=False)
+        assert config.output_attentions == True
+        config, unused_kwargs = BertConfig.from_pretrained(
+            "google-bert/bert-base-uncased", output_attentions=True, foo=False, return_unused_kwargs=True
+        )
+        assert config.output_attentions == True
+        assert unused_kwargs == {"foo": False}
         ```"""
-        config_file_name = config_file_name if config_file_name is not None else GENERATION_CONFIG_NAME
+        kwargs["cache_dir"] = cache_dir
+        kwargs["force_download"] = force_download
+        kwargs["local_files_only"] = local_files_only
+        kwargs["revision"] = revision
 
+        config_dict, kwargs = cls.get_config_dict(pretrained_model_name_or_path, **kwargs)
+        if cls.base_config_key and cls.base_config_key in config_dict:
+            config_dict = config_dict[cls.base_config_key]
+
+        if "model_type" in config_dict and hasattr(cls, "model_type") and config_dict["model_type"] != cls.model_type:
+            # sometimes the config has no `base_config_key` if the config is used in several composite models
+            # e.g. LlamaConfig. In that case we try to see if there is match in `model_type` before raising a warning
+            for v in config_dict.values():
+                if isinstance(v, dict) and v.get("model_type") == cls.model_type:
+                    config_dict = v
+
+            # raise warning only if we still can't see a match in `model_type`
+            if config_dict["model_type"] != cls.model_type:
+                logger.warning(
+                    f"You are using a model of type {config_dict['model_type']} to instantiate a model of type "
+                    f"{cls.model_type}. This is not supported for all configurations of models and can yield errors."
+                )
+
+        return cls.from_dict(config_dict, **kwargs)
+
+    @classmethod
+    def get_config_dict(
+        cls, pretrained_model_name_or_path, **kwargs
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """
+        From a `pretrained_model_name_or_path`, resolve to a dictionary of parameters, to be used for instantiating a
+        [`PreTrainedConfig`] using `from_dict`.
+
+        Parameters:
+            pretrained_model_name_or_path (`str` or `os.PathLike`):
+                The identifier of the pre-trained checkpoint from which we want the dictionary of parameters.
+
+        Returns:
+            `tuple[Dict, Dict]`: The dictionary(ies) that will be used to instantiate the configuration object.
+
+        """
+        original_kwargs = copy.deepcopy(kwargs)
+        # Get config dict associated with the base config file
+        config_dict, kwargs = cls._get_config_dict(pretrained_model_name_or_path, **kwargs)
+        if config_dict is None:
+            return {}, kwargs
+        if "_commit_hash" in config_dict:
+            original_kwargs["_commit_hash"] = config_dict["_commit_hash"]
+
+        # That config file may point us toward another config file to use.
+        if "configuration_files" in config_dict:
+            configuration_file = get_configuration_file(config_dict["configuration_files"])
+            config_dict, kwargs = cls._get_config_dict(
+                pretrained_model_name_or_path, _configuration_file=configuration_file, **original_kwargs
+            )
+
+        return config_dict, kwargs
+
+    @classmethod
+    def _get_config_dict(
+        cls, pretrained_model_name_or_path, **kwargs
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        cache_dir = kwargs.pop("cache_dir", None)
+        force_download = kwargs.pop("force_download", False)
         proxies = kwargs.pop("proxies", None)
+        token = kwargs.pop("token", None)
+        local_files_only = kwargs.pop("local_files_only", False)
+        revision = kwargs.pop("revision", None)
+        trust_remote_code = kwargs.pop("trust_remote_code", None)
         subfolder = kwargs.pop("subfolder", "")
         from_pipeline = kwargs.pop("_from_pipeline", None)
         from_auto_class = kwargs.pop("_from_auto", False)
         commit_hash = kwargs.pop("_commit_hash", None)
 
+        gguf_file = kwargs.get("gguf_file")
+
+        if trust_remote_code is True:
+            logger.warning(
+                "The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is"
+                " ignored."
+            )
+
         user_agent = {"file_type": "config", "from_auto_class": from_auto_class}
         if from_pipeline is not None:
             user_agent["using_pipeline"] = from_pipeline
 
-        config_path = os.path.join(pretrained_model_name, config_file_name)
-        config_path = str(config_path)
+        pretrained_model_name_or_path = str(pretrained_model_name_or_path)
 
-        is_local = os.path.exists(config_path)
-        if os.path.isfile(os.path.join(subfolder, config_path)):
-            # Special case when config_path is a local file
-            resolved_config_file = config_path
+        is_local = os.path.isdir(pretrained_model_name_or_path)
+        if os.path.isfile(os.path.join(subfolder, pretrained_model_name_or_path)):
+            # Special case when pretrained_model_name_or_path is a local file
+            resolved_config_file = pretrained_model_name_or_path
             is_local = True
         else:
-            configuration_file = config_file_name
+            configuration_file = kwargs.pop("_configuration_file", CONFIG_NAME) if gguf_file is None else gguf_file
+
             try:
                 # Load from local folder or from cache or download from model Hub and cache
                 resolved_config_file = cached_file(
-                    pretrained_model_name,
+                    pretrained_model_name_or_path,
                     configuration_file,
                     cache_dir=cache_dir,
                     force_download=force_download,
@@ -929,6 +683,8 @@ class GenerationConfig(PushToHubMixin):
                     subfolder=subfolder,
                     _commit_hash=commit_hash,
                 )
+                if resolved_config_file is None:
+                    return None, kwargs
                 commit_hash = extract_commit_hash(resolved_config_file, commit_hash)
             except OSError:
                 # Raise any environment error raise by `cached_file`. It will have a helpful error message adapted to
@@ -937,15 +693,19 @@ class GenerationConfig(PushToHubMixin):
             except Exception:
                 # For any other exception, we throw a generic error.
                 raise OSError(
-                    f"Can't load the configuration of '{pretrained_model_name}'. If you were trying to load it"
+                    f"Can't load the configuration of '{pretrained_model_name_or_path}'. If you were trying to load it"
                     " from 'https://huggingface.co/models', make sure you don't have a local directory with the same"
-                    f" name. Otherwise, make sure '{pretrained_model_name}' is the correct path to a directory"
+                    f" name. Otherwise, make sure '{pretrained_model_name_or_path}' is the correct path to a directory"
                     f" containing a {configuration_file} file"
                 )
 
         try:
-            # Load config dict
-            config_dict = cls._dict_from_json_file(resolved_config_file)
+            if gguf_file:
+                config_dict = load_gguf_checkpoint(resolved_config_file, return_tensors=False)["config"]
+            else:
+                # Load config dict
+                config_dict = cls._dict_from_json_file(resolved_config_file)
+
             config_dict["_commit_hash"] = commit_hash
         except (json.JSONDecodeError, UnicodeDecodeError):
             raise OSError(f"It looks like the config file at '{resolved_config_file}' is not a valid JSON file.")
@@ -955,36 +715,28 @@ class GenerationConfig(PushToHubMixin):
         else:
             logger.info(f"loading configuration file {configuration_file} from cache at {resolved_config_file}")
 
-        if kwargs.get("_from_model_config", False):
-            return cls.from_model_config(config_dict)
-        elif kwargs.get("return_unused_kwargs") is True:
-            config, unused_kwargs = cls.from_dict(config_dict, **kwargs)
-            config._original_object_hash = hash(config)  # Hash to detect whether the instance was modified
-            return config, unused_kwargs
-        else:
-            config = cls.from_dict(config_dict, **kwargs)
-            config._original_object_hash = hash(config)  # Hash to detect whether the instance was modified
-            return config
+        # timm models are not saved with the model_type in the config file
+        if "model_type" not in config_dict and is_timm_config_dict(config_dict):
+            config_dict["model_type"] = "timm_wrapper"
+
+        return config_dict, kwargs
 
     @classmethod
-    def _dict_from_json_file(cls, json_file: str | os.PathLike):
-        with open(json_file, "r", encoding="utf-8") as reader:
-            text = reader.read()
-        return json.loads(text)
-
-    @classmethod
-    def from_dict(cls, config_dict: dict[str, Any], **kwargs) -> "GenerationConfig":
+    def from_dict(
+        cls: type[SpecificPreTrainedConfigType], config_dict: dict[str, Any], **kwargs
+    ) -> SpecificPreTrainedConfigType:
         """
-        Instantiates a [`GenerationConfig`] from a Python dictionary of parameters.
+        Instantiates a [`PreTrainedConfig`] from a Python dictionary of parameters.
 
         Args:
             config_dict (`dict[str, Any]`):
-                Dictionary that will be used to instantiate the configuration object.
+                Dictionary that will be used to instantiate the configuration object. Such a dictionary can be
+                retrieved from a pretrained checkpoint by leveraging the [`~PreTrainedConfig.get_config_dict`] method.
             kwargs (`dict[str, Any]`):
                 Additional parameters from which to initialize the configuration object.
 
         Returns:
-            [`GenerationConfig`]: The configuration object instantiated from those parameters.
+            [`PreTrainedConfig`]: The configuration object instantiated from those parameters.
         """
         return_unused_kwargs = kwargs.pop("return_unused_kwargs", False)
         # Those arguments may be passed along for our internal telemetry.
@@ -995,50 +747,139 @@ class GenerationConfig(PushToHubMixin):
         if "_commit_hash" in kwargs and "_commit_hash" in config_dict:
             kwargs["_commit_hash"] = config_dict["_commit_hash"]
 
-        # The line below allows model-specific config to be loaded as well through kwargs, with safety checks.
-        # See https://github.com/huggingface/transformers/pull/21269
-        config = cls(**{**config_dict, **kwargs})
-        unused_kwargs = config.update(**kwargs)
+        # For BC on the old `torch_dtype`
+        if (torch_dtype := kwargs.pop("torch_dtype", None)) is not None:
+            logger.warning_once("`torch_dtype` is deprecated! Use `dtype` instead!")
+            # If both are present, use `dtype`
+            kwargs["dtype"] = kwargs.get("dtype", torch_dtype)
 
-        logger.info(f"Generate config {config}")
+        # We remove it from kwargs so that it does not appear in `return_unused_kwargs`.
+        config_dict["attn_implementation"] = kwargs.pop("attn_implementation", None)
+
+        config = cls(**config_dict)
+
+        # Update config with kwargs if needed
+        if "num_labels" in kwargs and "id2label" in kwargs:
+            num_labels = kwargs["num_labels"]
+            id2label = kwargs["id2label"] if kwargs["id2label"] is not None else []
+            if len(id2label) != num_labels:
+                raise ValueError(
+                    f"You passed along `num_labels={num_labels}` with an incompatible id to label map: "
+                    f"{kwargs['id2label']}. Since those arguments are inconsistent with each other, you should remove "
+                    "one of them."
+                )
+        to_remove = []
+        for key, value in kwargs.items():
+            if hasattr(config, key):
+                current_attr = getattr(config, key)
+                # To authorize passing a custom subconfig as kwarg in models that have nested configs.
+                # We need to update only custom kwarg values instead and keep other attributes in subconfig.
+                if isinstance(current_attr, PreTrainedConfig) and isinstance(value, dict):
+                    current_attr_updated = current_attr.to_dict()
+                    current_attr_updated.update(value)
+                    value = current_attr.__class__(**current_attr_updated)
+                setattr(config, key, value)
+                if key != "dtype":
+                    to_remove.append(key)
+        for key in to_remove:
+            kwargs.pop(key, None)
+
+        logger.info(f"Model config {config}")
         if return_unused_kwargs:
-            return config, unused_kwargs
+            return config, kwargs
         else:
             return config
 
-    def dict_dtype_to_str(self, d: dict[str, Any]) -> None:
+    @classmethod
+    def from_json_file(
+        cls: type[SpecificPreTrainedConfigType], json_file
+    ) -> SpecificPreTrainedConfigType:
         """
-        Checks whether the passed dictionary and its nested dicts have a *dtype* key and if it's not None,
-        converts torch.dtype to a string of just the type. For example, `torch.float32` get converted into *"float32"*
-        string, which can then be stored in the json format.
+        Instantiates a [`PreTrainedConfig`] from the path to a JSON file of parameters.
+
+        Args:
+            json_file (`str` or `os.PathLike`):
+                Path to the JSON file containing the parameters.
+
+        Returns:
+            [`PreTrainedConfig`]: The configuration object instantiated from that JSON file.
+
         """
-        if d.get("dtype") is not None and not isinstance(d["dtype"], str):
-            d["dtype"] = str(d["dtype"]).split(".")[1]
-        for value in d.values():
-            if isinstance(value, dict):
-                self.dict_dtype_to_str(value)
+        config_dict = cls._dict_from_json_file(json_file)
+        return cls(**config_dict)
+
+    @classmethod
+    def _dict_from_json_file(cls, json_file):
+        with open(json_file, encoding="utf-8") as reader:
+            text = reader.read()
+        return json.loads(text)
+
+    def __eq__(self, other):
+        return isinstance(other, PreTrainedConfig) and (self.__dict__ == other.__dict__)
+
+    def __repr__(self):
+        return f"{self.__class__.__name__} {self.to_json_string()}"
+
+    def __iter__(self):
+        yield from self.__dict__
 
     def to_diff_dict(self) -> dict[str, Any]:
         """
-        Removes all attributes from config which correspond to the default config attributes for better readability and
-        serializes to a Python dictionary.
+        Removes all attributes from the configuration that correspond to the default config attributes for
+        better readability, while always retaining the `config` attribute from the class. Serializes to a
+        Python dictionary.
 
         Returns:
-            `dict[str, Any]`: Dictionary of all the attributes that make up this configuration instance,
+            dict[str, Any]: Dictionary of all the attributes that make up this configuration instance.
         """
         config_dict = self.to_dict()
 
-        # get the default config dict
-        default_config_dict = GenerationConfig().to_dict()
+        # Get the default config dict (from a fresh PreTrainedConfig instance)
+        default_config_dict = PreTrainedConfig().to_dict()
+
+        # get class specific config dict
+        class_config_dict = self.__class__().to_dict() if not self.has_no_defaults_at_init else {}
 
         serializable_config_dict = {}
 
-        # only serialize values that differ from the default config
+        # Only serialize values that differ from the default config,
+        # except always keep the 'config' attribute.
         for key, value in config_dict.items():
-            if key not in default_config_dict or key == "transformers_version" or value != default_config_dict[key]:
+            if (
+                isinstance(getattr(self, key, None), PreTrainedConfig)
+                and key in class_config_dict
+                and isinstance(class_config_dict[key], dict)
+            ):
+                # For nested configs we need to clean the diff recursively
+                diff = recursive_diff_dict(value, default_config_dict, config_obj=getattr(self, key, None))
+                if "model_type" in value:
+                    # Needs to be set even if it's not in the diff
+                    diff["model_type"] = value["model_type"]
+
+                serializable_config_dict[key] = diff
+            elif (
+                key not in default_config_dict
+                or key == "transformers_version"
+                or key == "vocab_file"
+                or value != default_config_dict[key]
+                or (key in default_config_dict and value != class_config_dict.get(key, value))
+            ):
                 serializable_config_dict[key] = value
 
+        self._remove_keys_not_serialized(serializable_config_dict)
+
+        # Key removed only in diff dict
+        if "_name_or_path" in serializable_config_dict:
+            del serializable_config_dict["_name_or_path"]
+
+        if hasattr(self, "quantization_config"):
+            serializable_config_dict["quantization_config"] = (
+                self.quantization_config.to_dict()
+                if not isinstance(self.quantization_config, dict) and self.quantization_config is not None
+                else self.quantization_config
+            )
         self.dict_dtype_to_str(serializable_config_dict)
+
         return serializable_config_dict
 
     def to_dict(self) -> dict[str, Any]:
@@ -1049,33 +890,40 @@ class GenerationConfig(PushToHubMixin):
             `dict[str, Any]`: Dictionary of all the attributes that make up this configuration instance.
         """
         output = copy.deepcopy(self.__dict__)
+        if hasattr(self.__class__, "model_type"):
+            output["model_type"] = self.__class__.model_type
 
-        # Fields to ignore at serialization time
-        if "_commit_hash" in output:
-            del output["_commit_hash"]
-        if "_original_object_hash" in output:
-            del output["_original_object_hash"]
-
-        # Transformers version when serializing this file
+        # Transformers version when serializing the model
         output["transformers_version"] = __version__
 
+        for key, value in output.items():
+            # Deal with nested configs like CLIP
+            if isinstance(value, PreTrainedConfig):
+                value = value.to_dict()
+                del value["transformers_version"]
+
+            output[key] = value
+
+        self._remove_keys_not_serialized(output)
+
+        if hasattr(self, "quantization_config"):
+            output["quantization_config"] = (
+                self.quantization_config.to_dict()
+                if not isinstance(self.quantization_config, dict) and self.quantization_config is not None
+                else self.quantization_config
+            )
         self.dict_dtype_to_str(output)
+
         return output
 
-    def to_json_string(
-        self, use_diff: bool = True, ignore_metadata: bool = False, keys_to_pop: list[str]  = None
-    ) -> str:
+    def to_json_string(self, use_diff: bool = True) -> str:
         """
         Serializes this instance to a JSON string.
 
         Args:
             use_diff (`bool`, *optional*, defaults to `True`):
-                If set to `True`, only the difference between the config instance and the default `GenerationConfig()`
+                If set to `True`, only the difference between the config instance and the default `PreTrainedConfig()`
                 is serialized to JSON string.
-            ignore_metadata (`bool`, *optional*, defaults to `False`):
-                Whether to ignore the metadata fields present in the instance
-            keys_to_pop (`list[str]`, *optional*):
-                Keys to pop from the config dictionary before serializing
 
         Returns:
             `str`: String containing all the attributes that make up this configuration instance in JSON format.
@@ -1084,39 +932,9 @@ class GenerationConfig(PushToHubMixin):
             config_dict = self.to_diff_dict()
         else:
             config_dict = self.to_dict()
-
-        if keys_to_pop is not None:
-            for key in keys_to_pop:
-                config_dict.pop(key, None)
-
-        if ignore_metadata:
-            for metadata_field in METADATA_FIELDS:
-                config_dict.pop(metadata_field, None)
-
-        def convert_keys_to_string(obj):
-            if isinstance(obj, dict):
-                return {str(key): convert_keys_to_string(value) for key, value in obj.items()}
-            elif isinstance(obj, list):
-                return [convert_keys_to_string(item) for item in obj]
-            else:
-                return obj
-
-        def convert_dataclass_to_dict(obj):
-            if isinstance(obj, dict):
-                return {key: convert_dataclass_to_dict(value) for key, value in obj.items()}
-            elif is_dataclass(obj):
-                return obj.to_dict()
-            else:
-                return obj
-
-        config_dict = convert_keys_to_string(config_dict)
-        config_dict = convert_dataclass_to_dict(config_dict)
-
         return json.dumps(config_dict, indent=2, sort_keys=True) + "\n"
 
-    def to_json_file(
-        self, json_file_path: str | os.PathLike, use_diff: bool = True, keys_to_pop: list[str]  = None
-    ) -> None:
+    def to_json_file(self, json_file_path, use_diff: bool = True):
         """
         Save this instance to a JSON file.
 
@@ -1124,391 +942,287 @@ class GenerationConfig(PushToHubMixin):
             json_file_path (`str` or `os.PathLike`):
                 Path to the JSON file in which this configuration instance's parameters will be saved.
             use_diff (`bool`, *optional*, defaults to `True`):
-                If set to `True`, only the difference between the config instance and the default `GenerationConfig()`
+                If set to `True`, only the difference between the config instance and the default `PreTrainedConfig()`
                 is serialized to JSON file.
-            keys_to_pop (`list[str]`, *optional*):
-                Keys to pop from the config dictionary before serializing
         """
         with open(json_file_path, "w", encoding="utf-8") as writer:
-            writer.write(self.to_json_string(use_diff=use_diff, keys_to_pop=keys_to_pop))
+            writer.write(self.to_json_string(use_diff=use_diff))
 
-    @classmethod
-    def from_model_config(cls, model_config: Union["PreTrainedConfig", dict]) -> "GenerationConfig":
+    def update(self, config_dict: dict[str, Any]):
         """
-        Instantiates a [`GenerationConfig`] from a [`PreTrainedConfig`]. This function is useful to convert legacy
-        [`PreTrainedConfig`] objects, which may contain generation parameters, into a stand-alone [`GenerationConfig`].
+        Updates attributes of this class with attributes from `config_dict`.
 
         Args:
-            model_config (`PreTrainedConfig | dict`):
-                The model config that will be used to instantiate the generation config.
-
-        Returns:
-            [`GenerationConfig`]: The configuration object instantiated from those parameters.
+            config_dict (`dict[str, Any]`): Dictionary of attributes that should be updated for this class.
         """
-        config_dict = model_config.to_dict() if not isinstance(model_config, dict) else model_config
-        config_dict.pop("_from_model_config", None)
+        for key, value in config_dict.items():
+            setattr(self, key, value)
 
-        # Removes all `None` from the model config dict -- this lets the generation config defaults to take hold
-        config_dict = {key: value for key, value in config_dict.items() if value is not None}
-        generation_config = cls.from_dict(config_dict, return_unused_kwargs=False, _from_model_config=True)
+    def update_from_string(self, update_str: str):
+        """
+        Updates attributes of this class with attributes from `update_str`.
 
-        # Special case: some models have generation attributes set in the decoder. Use them if still unset in the
-        # generation config (which in turn is defined from the outer attributes of model config).
-        if isinstance(model_config, dict):
-            decoder_possible_text_config_names = ("decoder", "generator", "text_config")
-            for text_config_name in decoder_possible_text_config_names:
-                if text_config := model_config.get(text_config_name):
-                    model_config = text_config
-                    break
+        The expected format is ints, floats and strings as is, and for booleans use `true` or `false`. For example:
+        "n_embd=10,resid_pdrop=0.2,scale_attn_weights=false,summary_type=cls_index"
+
+        The keys to change have to already exist in the config object.
+
+        Args:
+            update_str (`str`): String with attributes that should be updated for this class.
+
+        """
+
+        d = dict(x.split("=") for x in update_str.split(","))
+        for k, v in d.items():
+            if not hasattr(self, k):
+                raise ValueError(f"key {k} isn't in the original config dict")
+
+            old_v = getattr(self, k)
+            if isinstance(old_v, bool):
+                if v.lower() in ["true", "1", "y", "yes"]:
+                    v = True
+                elif v.lower() in ["false", "0", "n", "no"]:
+                    v = False
+                else:
+                    raise ValueError(f"can't derive true or false from {v} (key {k})")
+            elif isinstance(old_v, int):
+                v = int(v)
+            elif isinstance(old_v, float):
+                v = float(v)
+            elif not isinstance(old_v, str):
+                raise TypeError(
+                    f"You can only update int, float, bool or string values in the config, got {v} for key {k}"
+                )
+
+            setattr(self, k, v)
+
+    def dict_dtype_to_str(self, d: dict[str, Any]) -> None:
+        """
+        Checks whether the passed dictionary and its nested dicts have a *dtype* key and if it's not None,
+        converts torch.dtype to a string of just the type. For example, `torch.float32` get converted into *"float32"*
+        string, which can then be stored in the json format.
+        """
+        if d.get("dtype") is not None:
+            if isinstance(d["dtype"], dict):
+                d["dtype"] = {k: str(v).split(".")[-1] for k, v in d["dtype"].items()}
+            # models like Emu3 can have "dtype" as token in config's vocabulary map,
+            # so we also exclude int type here to avoid error in this special case.
+            elif not isinstance(d["dtype"], (str, int)):
+                d["dtype"] = str(d["dtype"]).split(".")[1]
+        for value in d.values():
+            if isinstance(value, dict):
+                self.dict_dtype_to_str(value)
+
+    def _remove_keys_not_serialized(self, d: dict[str, Any]) -> None:
+        """
+        Checks and removes if there are any keys in the dict that should not be serialized when saving the config.
+        Runs recursive check on the dict, to remove from all sub configs.
+        """
+        if "_auto_class" in d:
+            del d["_auto_class"]
+        if "_output_attentions" in d:
+            d["output_attentions"] = d.pop("_output_attentions")
+        if "_commit_hash" in d:
+            del d["_commit_hash"]
+        if "_attn_implementation_internal" in d:
+            del d["_attn_implementation_internal"]
+        # Do not serialize `base_model_tp_plan` for now
+        if "base_model_tp_plan" in d:
+            del d["base_model_tp_plan"]
+        # Do not serialize `base_model_pp_plan` for now
+        if "base_model_pp_plan" in d:
+            del d["base_model_pp_plan"]
+        for value in d.values():
+            if isinstance(value, dict):
+                self._remove_keys_not_serialized(value)
+
+    @classmethod
+    def register_for_auto_class(cls, auto_class="AutoConfig"):
+        """
+        Register this class with a given auto class. This should only be used for custom configurations as the ones in
+        the library are already mapped with `AutoConfig`.
+
+
+
+        Args:
+            auto_class (`str` or `type`, *optional*, defaults to `"AutoConfig"`):
+                The auto class to register this new configuration with.
+        """
+        if not isinstance(auto_class, str):
+            auto_class = auto_class.__name__
+
+        import transformers.models.auto as auto_module
+
+        if not hasattr(auto_module, auto_class):
+            raise ValueError(f"{auto_class} is not a valid auto class.")
+
+        cls._auto_class = auto_class
+
+    def _get_generation_parameters(self) -> dict[str, Any]:
+        """
+        Gets the non-default generation parameters on the PreTrainedConfig instance
+        """
+        generation_params = {}
+        default_config = self.__class__().to_dict() if not self.has_no_defaults_at_init else {}
+        for key in GenerationConfig._get_default_generation_params().keys():
+            if hasattr(self, key) and getattr(self, key) is not None and key not in default_config:
+                generation_params[key] = getattr(self, key)
+
+        return generation_params
+
+    def get_text_config(self, decoder=None, encoder=None) -> "PreTrainedConfig":
+        """
+        Returns the text config related to the text input (encoder) or text output (decoder) of the model. The
+        `decoder` and `encoder` input arguments can be used to specify which end of the model we are interested in,
+        which is useful on models that have both text input and output modalities.
+
+        There are three possible outcomes of using this method:
+        1. On most models, it returns the original config instance itself.
+        2. On newer (2024+) composite models, it returns the text section of the config, which is nested under a set
+            of valid names.
+        3. On older (2023-) composite models, it discards decoder-only parameters when `encoder=True` and vice-versa.
+
+        Args:
+            decoder (`Optional[bool]`, *optional*):
+                If set to `True`, then only search for decoder config names.
+            encoder (`Optional[bool]`, *optional*):
+                If set to `True`, then only search for encoder config names.
+        """
+        return_both = decoder == encoder  # both unset or both set -> search all possible names
+
+        decoder_possible_text_config_names = ("decoder", "generator", "text_config")
+        encoder_possible_text_config_names = ("text_encoder",)
+        if return_both:
+            possible_text_config_names = encoder_possible_text_config_names + decoder_possible_text_config_names
+        elif decoder:
+            possible_text_config_names = decoder_possible_text_config_names
         else:
-            model_config = model_config.get_text_config(decoder=True)
-            model_config = model_config.to_dict()
+            possible_text_config_names = encoder_possible_text_config_names
 
-        default_generation_config = GenerationConfig()
-        for attr in generation_config.to_dict():
-            is_unset = getattr(generation_config, attr) == getattr(default_generation_config, attr)
-            if attr in model_config and is_unset:
-                setattr(generation_config, attr, model_config[attr])
+        valid_text_config_names = []
+        for text_config_name in possible_text_config_names:
+            if hasattr(self, text_config_name):
+                text_config = getattr(self, text_config_name, None)
+                if text_config is not None:
+                    valid_text_config_names += [text_config_name]
 
-        # If any `output_...` flag is set to `True`, we ensure `return_dict_in_generate` is set to `True`.
-        if not generation_config.return_dict_in_generate:
-            if any(
-                getattr(generation_config, extra_output_flag, False)
-                for extra_output_flag in generation_config.extra_output_flags
-            ):
-                generation_config.return_dict_in_generate = True
-
-        # Hash to detect whether the instance was modified
-        generation_config._original_object_hash = hash(generation_config)
-        return generation_config
-
-    def update(self, defaults_only=False, **kwargs):
-        """
-        Updates attributes of this class instance with attributes from `kwargs` if they match existing attributes,
-        returning all the unused kwargs.
-
-        Args:
-            defaults_only (`bool`, *optional*, defaults to `False`):
-                Whether to update all keys in config with `kwargs` or only those that are set to `None` (i.e. default value).
-            kwargs (`dict[str, Any]`):
-                Dictionary of attributes to tentatively update this class.
-
-        Returns:
-            `dict[str, Any]`: Dictionary containing all the key-value pairs that were not used to update the instance.
-        """
-        to_remove = []
-        for key, value in kwargs.items():
-            if hasattr(self, key):
-                if not defaults_only or getattr(self, key) is None:
-                    setattr(self, key, value)
-                    to_remove.append(key)
-
-        # Confirm that the updated instance is still valid
-        self.validate()
-
-        # Remove all the attributes that were updated, without modifying the input dict
-        unused_kwargs = {key: value for key, value in kwargs.items() if key not in to_remove}
-        return unused_kwargs
-
-
-@dataclass
-class BaseWatermarkingConfig(ABC):
-    """Generic watermarking config"""
-
-    @classmethod
-    def from_dict(cls, config_dict, **kwargs):
-        """
-        Constructs a BaseWatermarkingConfig instance from a dictionary of parameters.
-
-        Args:
-            config_dict (dict[str, Any]): Dictionary containing configuration parameters.
-            **kwargs: Additional keyword arguments to override dictionary values.
-
-        Returns:
-            BaseWatermarkingConfig: Instance of BaseWatermarkingConfig constructed from the dictionary.
-        """
-        config = cls(**config_dict)
-        to_remove = []
-        for key, value in kwargs.items():
-            if hasattr(config, key):
-                setattr(config, key, value)
-                to_remove.append(key)
-        for key in to_remove:
-            kwargs.pop(key, None)
-        return config
-
-    def to_json_file(self, json_file_path: str | os.PathLike):
-        """
-        Save this instance to a JSON file.
-
-        Args:
-            json_file_path (Union[str, os.PathLike]): Path to the JSON file in which this configuration instance's parameters will be saved.
-        """
-        with open(json_file_path, "w", encoding="utf-8") as writer:
-            config_dict = self.to_dict()
-            json_string = json.dumps(config_dict, indent=2, sort_keys=True) + "\n"
-
-            writer.write(json_string)
-
-    def to_dict(self) -> dict[str, Any]:
-        """
-        Serializes this instance to a Python dictionary.
-
-        Returns:
-            dict[str, Any]: Dictionary of all the attributes that make up this configuration instance.
-        """
-        output = copy.deepcopy(self.__dict__)
-        return output
-
-    def __iter__(self):
-        for attr, value in copy.deepcopy(self.__dict__).items():
-            yield attr, value
-
-    def __repr__(self):
-        return f"{self.__class__.__name__} {self.to_json_string()}"
-
-    def to_json_string(self):
-        """
-        Serializes this instance to a JSON formatted string.
-
-        Returns:
-            str: JSON formatted string representing the configuration instance.
-        """
-        return json.dumps(self.__dict__, indent=2) + "\n"
-
-    def update(self, **kwargs):
-        """
-        Update the configuration attributes with new values.
-
-        Args:
-            **kwargs: Keyword arguments representing configuration attributes and their new values.
-        """
-        for key, value in kwargs.items():
-            if hasattr(self, key):
-                setattr(self, key, value)
-
-    @abstractmethod
-    def validate(self): ...
-
-    @abstractmethod
-    def construct_processor(self, vocab_size): ...
-
-
-@dataclass
-class WatermarkingConfig(BaseWatermarkingConfig):
-    """
-    Class that holds arguments for watermark generation and should be passed into `GenerationConfig` during `generate`.
-    See [this paper](https://huggingface.co/papers/2306.04634) for more details on the arguments.
-
-    Accepts the following keys:
-        - greenlist_ratio (`float`):
-            Used for watermarking. The ratio of "green" tokens used to the vocabulary size. Defaults to 0.25.
-        - bias (`float`):
-            Used with watermarking. The bias added to the selected "green" tokens' logits. Defaults to 2.0.
-        - hashing_key (`int`):
-            Hashing key used for watermarking. Defaults to 15485863 (the millionth prime).
-        - seeding_scheme (`str`):
-            Algorithm to use for watermarking. Accepts values:
-                - "lefthash" (default): "green" tokens selection depend on the last token (Algorithm 2 from the paper)
-                - "selfhash": "green" tokens selection depends on the current token itself (Algorithm 3 from the paper)
-                    The downside of this scheme is that it considers all possible next tokens and can be slower than "lefthash".
-        - context_width(`int`):
-            The context length of previous tokens to use in seeding. Higher context length makes watermarking more robust.
-    """
-
-    def __init__(
-        self,
-        greenlist_ratio: float = 0.25,
-        bias: float = 2.0,
-        hashing_key: int = 15485863,
-        seeding_scheme: str = "lefthash",
-        context_width: int = 1,
-    ):
-        self.greenlist_ratio = greenlist_ratio
-        self.bias = bias
-        self.hashing_key = hashing_key
-        self.seeding_scheme = seeding_scheme
-        self.context_width = context_width
-
-    def validate(self):
-        watermark_missing_arg_msg = (
-            "Some of the keys in `watermarking_config` are defined incorrectly. `{key}` should be {correct_value}` "
-            "but found {found_value}"
-        )
-        if self.seeding_scheme not in ["selfhash", "lefthash"]:
+        if len(valid_text_config_names) > 1:
             raise ValueError(
-                watermark_missing_arg_msg.format(
-                    key="seeding_scheme",
-                    correct_value="[`selfhash`, `lefthash`]",
-                    found_value=self.seeding_scheme,
-                ),
+                f"Multiple valid text configs were found in the model config: {valid_text_config_names}. In this "
+                "case, using `get_text_config()` would be ambiguous. Please specify the desired text config directly, "
+                "e.g. `text_config = config.sub_config_name`"
             )
-        if not 0.0 <= self.greenlist_ratio <= 1.0:
-            raise ValueError(
-                watermark_missing_arg_msg.format(
-                    key="greenlist_ratio",
-                    correct_value="in range between 0.0 and 1.0",
-                    found_value=self.seeding_scheme,
-                ),
-            )
-        if not self.context_width >= 1:
-            raise ValueError(
-                watermark_missing_arg_msg.format(
-                    key="context_width",
-                    correct_value="a positive integer",
-                    found_value=self.context_width,
-                ),
-            )
+        elif len(valid_text_config_names) == 1:
+            config_to_return = getattr(self, valid_text_config_names[0])
+        else:
+            config_to_return = self
 
-    def construct_processor(self, vocab_size: int, device) -> "WatermarkLogitsProcessor":
-        return WatermarkLogitsProcessor(
-            vocab_size=vocab_size,
-            device=device,
-            greenlist_ratio=self.greenlist_ratio,
-            bias=self.bias,
-            hashing_key=self.hashing_key,
-            seeding_scheme=self.seeding_scheme,
-            context_width=self.context_width,
-        )
+        # handle legacy models with flat config structure, when we only want one of the configs
+        if not return_both and len(valid_text_config_names) == 0 and config_to_return.is_encoder_decoder:
+            config_to_return = copy.deepcopy(config_to_return)
+            prefix_to_discard = "encoder" if decoder else "decoder"
+            prefix_to_keep = "decoder" if decoder else "encoder"
+            for key in config_to_return.to_dict():
+                # NOTE: We don't want to discard the key if it is mapped from a different attribute name at read time
+                if key.startswith(prefix_to_discard) and key not in config_to_return.attribute_map.values():
+                    delattr(config_to_return, key)
+                if key.startswith(prefix_to_keep):
+                    # [encoder/decoder]_layers -> num_hidden_layers
+                    if key == prefix_to_keep + "_layers":
+                        new_key = "num_hidden_layers"
+                    # [encoder/decoder]_attention_heads -> num_attention_heads
+                    elif key == prefix_to_keep + "_attention_heads":
+                        new_key = "num_attention_heads"
+                    # e.g. encoder_hidden_act -> hidden_act
+                    else:
+                        new_key = key[len(prefix_to_keep) + 1 :]
+
+                    # Does the class map the new key into a different attribute name at read time? if so, let's write
+                    # into that attribute instead
+                    if new_key in config_to_return.attribute_map:
+                        new_key = config_to_return.attribute_map[new_key]
+
+                    value = getattr(config_to_return, key)
+                    delattr(config_to_return, key)
+                    setattr(config_to_return, new_key, value)
+
+        return config_to_return
 
 
-@dataclass
-class SynthIDTextWatermarkingConfig(BaseWatermarkingConfig):
+def get_configuration_file(configuration_files: list[str]) -> str:
     """
-    Class that holds arguments for watermark generation and should be passed into `GenerationConfig` during `generate`.
-    See [this paper](https://www.nature.com/articles/s41586-024-08025-4) for more details on the arguments.
+    Get the configuration file to use for this version of transformers.
 
     Args:
-        ngram_len (`int`):
-            Ngram length.
-        keys (`list[int]`):
-            A sequence of watermarking keys, one for each depth.
-        context_history_size (`int`, *optional*, defaults to 1024):
-            Size of the tensor to keep track of seen contexts.
-        sampling_table_seed (`int`, *optional*, defaults to 0):
-            Random seed to generate the sampling table.
-        sampling_table_size (`int`, *optional*, defaults to 65536):
-            Size of the sampling table.
-        skip_first_ngram_calls (`bool`, *optional*, defaults to `False`):
-            Whether to skip first ngram calls.
-        debug_mode (`bool`, optional, *optional*, defaults to `False`):
-            Logits are modified to uniform one got before watermarking modification is applied. This is to test the
-            implementation.
+        configuration_files (`list[str]`): The list of available configuration files.
 
-    Examples:
-    ```python
-    >>> from transformers import AutoModelForCausalLM, AutoTokenizer, SynthIDTextWatermarkingConfig
-
-    >>> tokenizer = AutoTokenizer.from_pretrained('google/gemma-2-2b', padding_side="left")
-    >>> model = AutoModelForCausalLM.from_pretrained('google/gemma-2-2b')
-
-    >>> # SynthID Text configuration
-    >>> watermarking_config = SynthIDTextWatermarkingConfig(
-    ...     keys=[654, 400, 836, 123, 340, 443, 597, 160, 57],
-    ...     ngram_len=5,
-    ... )
-
-    >>> # Generation with watermarking
-    >>> tokenized_prompts = tokenizer(["Once upon a time, "], return_tensors="pt", padding=True)
-    >>> output_sequences = model.generate(
-    ...     **tokenized_prompts, watermarking_config=watermarking_config, do_sample=True, max_new_tokens=10
-    ... )
-    >>> watermarked_text = tokenizer.batch_decode(output_sequences, skip_special_tokens=True)
-    ```
+    Returns:
+        `str`: The configuration file to use.
     """
+    configuration_files_map = {}
+    for file_name in configuration_files:
+        if file_name.startswith("config.") and file_name.endswith(".json") and file_name != "config.json":
+            v = file_name.removeprefix("config.").removesuffix(".json")
+            configuration_files_map[v] = file_name
+    available_versions = sorted(configuration_files_map.keys())
 
-    def __init__(
-        self,
-        ngram_len: int,
-        keys: list[int],
-        context_history_size: int = 1024,
-        sampling_table_seed: int = 0,
-        sampling_table_size: int = 2**16,
-        skip_first_ngram_calls: bool = False,
-        debug_mode: bool = False,
-    ):
-        self.ngram_len = ngram_len
-        self.keys = keys
-        self.sampling_table_size = sampling_table_size
-        self.sampling_table_seed = sampling_table_seed
-        self.context_history_size = context_history_size
-        self.skip_first_ngram_calls = skip_first_ngram_calls
-        self.debug_mode = debug_mode
+    # Defaults to FULL_CONFIGURATION_FILE and then try to look at some newer versions.
+    configuration_file = CONFIG_NAME
+    transformers_version = version.parse(__version__)
+    for v in available_versions:
+        if version.parse(v) <= transformers_version:
+            configuration_file = configuration_files_map[v]
+        else:
+            # No point going further since the versions are sorted.
+            break
 
-    def validate(self):
-        watermark_missing_arg_msg = (
-            "Some of the keys in `watermarking_config` are defined incorrectly. `{key}` should be {correct_value}` "
-            "but found {found_value}"
+    return configuration_file
+
+
+def recursive_diff_dict(dict_a, dict_b, config_obj=None):
+    """
+    Helper function to recursively take the diff between two nested dictionaries. The resulting diff only contains the
+    values from `dict_a` that are different from values in `dict_b`.
+
+    dict_b : the default config dictionary. We want to remove values that are in this one
+    """
+    diff = {}
+    default = config_obj.__class__().to_dict() if config_obj is not None else {}
+    for key, value in dict_a.items():
+        obj_value = getattr(config_obj, str(key), None)
+        if isinstance(obj_value, PreTrainedConfig) and key in dict_b and isinstance(dict_b[key], dict):
+            diff_value = recursive_diff_dict(value, dict_b[key], config_obj=obj_value)
+            diff[key] = diff_value
+        elif key not in dict_b or (value != default[key]):
+            diff[key] = value
+    return diff
+
+
+PreTrainedConfig.push_to_hub = copy_func(PreTrainedConfig.push_to_hub)
+if PreTrainedConfig.push_to_hub.__doc__ is not None:
+    PreTrainedConfig.push_to_hub.__doc__ = PreTrainedConfig.push_to_hub.__doc__.format(
+        object="config", object_class="AutoConfig", object_files="configuration file"
+    )
+
+
+# The alias is only here for BC - we did not have the correct CamelCasing before
+PretrainedConfig = PreTrainedConfig
+
+
+ALLOWED_LAYER_TYPES = (
+    "full_attention",
+    "sliding_attention",
+    "chunked_attention",
+    "linear_attention",  # used in minimax
+)
+
+
+def layer_type_validation(layer_types: list[str], num_hidden_layers: Optional[int] = None):
+    """Check that `layer_types` is correctly defined."""
+    if not all(layer_type in ALLOWED_LAYER_TYPES for layer_type in layer_types):
+        raise ValueError(f"The `layer_types` entries must be in {ALLOWED_LAYER_TYPES}")
+    if num_hidden_layers is not None and num_hidden_layers != len(layer_types):
+        raise ValueError(
+            f"`num_hidden_layers` ({num_hidden_layers}) must be equal to the number of layer types "
+            f"({len(layer_types)})"
         )
-        if self.sampling_table_size > 2**24:
-            raise ValueError(
-                watermark_missing_arg_msg.format(
-                    key="sampling_table_size",
-                    correct_value="< 2**24",
-                    found_value=self.sampling_table_size,
-                ),
-            )
-
-    def construct_processor(self, vocab_size: int, device) -> "WatermarkLogitsProcessor":
-        return SynthIDTextWatermarkLogitsProcessor(
-            ngram_len=self.ngram_len,
-            keys=self.keys,
-            sampling_table_size=self.sampling_table_size,
-            sampling_table_seed=self.sampling_table_seed,
-            context_history_size=self.context_history_size,
-            device=device,
-            skip_first_ngram_calls=self.skip_first_ngram_calls,
-            debug_mode=self.debug_mode,
-        )
-
-
-@dataclass
-class CompileConfig:
-    """
-    Class that holds arguments relative to `torch.compile` behavior, when using automatic compilation in `generate`.
-    See [`torch.compile`](https://pytorch.org/docs/stable/generated/torch.compile.html) for more details on the arguments.
-
-    Args:
-        fullgraph (`bool`, *optional*, defaults to `False`):
-            If False (default), attempts to discover compileable regions that will be optimized. If True, then require
-            that the entire function be capturable into a single graph. If this is not possible (that is, if there are
-            graph breaks), then an error will be raised.
-        dynamic (`bool` or `None`, *optional*):
-            Whether to try to use dynamic shape graphs.
-        backend (`str` or `Callable`, *optional*, defaults to `"inductor"`):
-            Backend to be used.
-        mode (`str`, *optional*, defaults to `"reduce-overhead"`):
-            Controls balance between performance and overhead.
-        options (`dict`, *optional*):
-            A dictionary of options to pass to the backend.
-
-    Examples:
-    ```python
-    >>> from transformers import AutoModelForCausalLM, AutoTokenizer, CompileConfig
-
-    >>> tokenizer = AutoTokenizer.from_pretrained('google/gemma-2-2b')
-    >>> model = AutoModelForCausalLM.from_pretrained('google/gemma-2-2b').cuda()
-
-    >>> # Automatic compile configuration, used with static cache
-    >>> compile_config = CompileConfig(dynamic=True)
-
-    >>> # Generation with static cache and compile config
-    >>> input = tokenizer.encode("Hello there, how", return_tensors="pt").cuda()
-    >>> output = model.generate(
-    ...     input, do_sample=False, max_new_tokens=300, cache_implementation="static", compile_config=compile_config
-    ... )
-    >>> output_text = tokenizer.batch_decode(output, skip_special_tokens=True)[0]
-    ```
-    """
-
-    fullgraph: bool = False
-    dynamic: bool  = None
-    backend: str | Callable = "inductor"
-    mode: str = "reduce-overhead"
-    options: dict  = None
-    # Used to flag our `generate` call to compile on e.g. CPU. Often not optimal, but useful for testing purposes.
-    _compile_all_devices = None
-
-    def to_dict(self) -> dict[str, Any]:
-        """Serializes this instance to a Python dictionary."""
-        return copy.deepcopy({key: value for key, value in self.__dict__.items() if key != "_compile_all_devices"})

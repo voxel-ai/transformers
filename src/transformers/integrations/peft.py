@@ -83,7 +83,7 @@ class PeftAdapterMixin:
         adapter_state_dict: dict[str, "torch.Tensor"]  = None,
         low_cpu_mem_usage: bool = False,
         is_trainable: bool = False,
-        hotswap: bool | Literal["auto"] = "auto",
+        hotswap = "auto",
         local_files_only: bool = False,
         adapter_kwargs: dict[str, Any]  = None,
     ) -> None:
@@ -448,7 +448,7 @@ class PeftAdapterMixin:
 
         self.set_adapter(adapter_name)
 
-    def set_adapter(self, adapter_name: list[str] | str) -> None:
+    def set_adapter(self, adapter_name) -> None:
         """
         If you are not familiar with adapters and PEFT methods, we invite you to read more about them on the PEFT
         official documentation: https://huggingface.co/docs/peft
@@ -640,7 +640,7 @@ class PeftAdapterMixin:
             **dispatch_model_kwargs,
         )
 
-    def delete_adapter(self, adapter_names: list[str] | str) -> None:
+    def delete_adapter(self, adapter_names) -> None:
         """
         Delete a PEFT adapter from the underlying model.
 
