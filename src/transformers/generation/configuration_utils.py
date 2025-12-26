@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING, Any, Optional, TypeVar, Union
 from huggingface_hub import create_repo
 from packaging import version
 
-from . import __version__
+__version__ = "5.0.0"
 from .dynamic_module_utils import custom_object_save
 from .generation.configuration_utils import GenerationConfig
 from .modeling_gguf_pytorch_utils import load_gguf_checkpoint
